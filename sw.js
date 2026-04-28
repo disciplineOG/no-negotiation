@@ -1,10 +1,16 @@
-const CACHE = 'health-dash-v1';
+const CACHE = 'health-dash-v2';
+const BASE = '/no-negotiation';
+
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(['/', '/index.html']))
+    caches.open(CACHE).then(c => c.addAll([
+      BASE + '/',
+      BASE + '/index.html'
+    ]))
   );
   self.skipWaiting();
 });
+
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -13,6 +19,7 @@ self.addEventListener('activate', e => {
   );
   self.clients.claim();
 });
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
@@ -20,22 +27,22 @@ self.addEventListener('fetch', e => {
       const clone = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, clone));
       return res;
-    }).catch(() => caches.match(e.request))
+    }).catch(() => caches.match(e.request).then(r => r || caches.match(BASE + '/index.html')))
   );
 });
+
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {};
   e.waitUntil(
     self.registration.showNotification(data.title || '⚡ Health Dashboard', {
       body: data.body || 'Reminder from your dashboard',
-      icon: '/icon.png',
-      badge: '/icon.png',
       tag: data.tag || 'health-reminder',
       renotify: true
     })
   );
 });
+
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  e.waitUntil(clients.openWindow('/'));
+  e.waitUntil(clients.openWindow(BASE + '/'));
 });
