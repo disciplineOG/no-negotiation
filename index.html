@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Health">
     <meta name="theme-color" content="#0d0d10">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/no-negotiation/manifest.json">
     <!-- Firebase SDK (offline persistence built-in) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -2642,7 +2642,7 @@
     // INIT
     // ═══════════════════════════════════════
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(function(){});
+      navigator.serviceWorker.register('/no-negotiation/sw.js').catch(function(){});
     }
 
     window.addEventListener('load', function() {
