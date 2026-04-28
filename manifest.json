@@ -1,0 +1,9 @@
+{
+  "name": "Health & Life Dashboard",
+  "short_name": "Health",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d10",
+  "theme_color": "#0d0d10",
+  "orientation": "portrait"
+}

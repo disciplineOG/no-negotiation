@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Health & Life Dashboard</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Health">
+    <meta name="theme-color" content="#0d0d10">
+    <link rel="manifest" href="manifest.json">
+    <!-- Firebase SDK (offline persistence built-in) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ══════════════════════════════════════
+           DESIGN TOKENS — DARK (default)
+        ══════════════════════════════════════ */
+        :root{
+          --bg:        #0d0d10;
+          --bg2:       #17171c;
+          --bg3:       #222228;
+          --bg4:       #2c2c34;
+          --text1:     #f0f0f6;
+          --text2:     rgba(240,240,246,0.72);
+          --text3:     rgba(240,240,246,0.42);
+          --border:    rgba(255,255,255,0.09);
+          --border2:   rgba(255,255,255,0.05);
+          --accent:    #ff6b00;
+          --accent-glow: rgba(255,107,0,0.40);
+          --green:     #34c759;
+          --red:       #ff3b30;
+          --blue:      #0a84ff;
+          --yellow:    #ff9f0a;
+          --purple:    #bf5af2;
+          --teal:      #5ac8fa;
+          --cs: dark; /* color-scheme for inputs */
+        }
+
+        /* ══════════════════════════════════════
+           LIGHT THEME TOKENS
+        ══════════════════════════════════════ */
+        body.light{
+          --bg:        #f2f2f7;
+          --bg2:       #ffffff;
+          --bg3:       #e8e8ef;
+          --bg4:       #d8d8e0;
+          --text1:     #111118;
+          --text2:     rgba(17,17,24,0.72);
+          --text3:     rgba(17,17,24,0.44);
+          --border:    rgba(0,0,0,0.10);
+          --border2:   rgba(0,0,0,0.06);
+          --accent:    #e05500;
+          --accent-glow: rgba(224,85,0,0.28);
+          --green:     #1c9e42;
+          --red:       #d92b1e;
+          --blue:      #0060e0;
+          --yellow:    #c47c00;
+          --purple:    #9034d0;
+          --teal:      #0d7ea0;
+          --cs: light;
+        }
+
+        /* ══════════════════════════════════════
+           GLOBAL RESET + BASE
+        ══════════════════════════════════════ */
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        html{transition:none}
+        body{
+          font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+          background:var(--bg);color:var(--text1);
+          min-height:100vh;font-size:14px;
+          -webkit-font-smoothing:antialiased;
+          transition:background .35s ease,color .35s ease;
+        }
+
+        /* ══════════════════════════════════════
+           HEADER + TABS
+        ══════════════════════════════════════ */
+        .header{
+          background:var(--bg2);
+          border-bottom:0.5px solid var(--border);
+          padding:14px 14px 0;
+          position:sticky;top:0;z-index:200;
+          transition:background .35s ease,border-color .35s ease;
+        }
+        .header-title{
+          font-size:20px;font-weight:800;
+          color:var(--accent);
+          text-shadow:0 0 18px var(--accent-glow);
+          letter-spacing:-0.3px;
+        }
+        .header-sub{font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:10px}
+
+        .tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:10px;padding-top:6px}
+        .tabs::-webkit-scrollbar{display:none}
+        .tab{
+          flex-shrink:0;padding:7px 14px;
+          border:0.5px solid var(--border);
+          border-radius:20px;
+          background:transparent;
+          color:var(--text3);
+          font-size:12px;font-weight:600;font-family:inherit;
+          cursor:pointer;white-space:nowrap;
+          transition:all .2s;outline:none;
+        }
+        .tab:hover{color:var(--accent);border-color:var(--accent)}
+        .tab.active{
+          background:var(--accent);color:#fff;
+          border-color:var(--accent);
+          box-shadow:0 0 12px var(--accent-glow),0 0 28px var(--accent-glow);
+        }
+
+        /* ══════════════════════════════════════
+           LAYOUT
+        ══════════════════════════════════════ */
+        .content{padding:12px 12px 80px;transition:background .35s}
+        .section{display:none}
+        #sec_overview{display:block}
+
+        /* ══════════════════════════════════════
+           CARDS + METRICS
+        ══════════════════════════════════════ */
+        .card{
+          background:var(--bg2);
+          border:0.5px solid var(--border);
+          border-radius:14px;padding:14px;margin-bottom:12px;
+          transition:background .35s ease,border-color .35s ease;
+          box-shadow:0 2px 8px rgba(0,0,0,0.18);
+        }
+        .card-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+        .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+        @media(min-width:500px){.metrics{grid-template-columns:repeat(4,1fr)}}
+        .metric{
+          background:var(--bg3);
+          border:0.5px solid var(--border);
+          border-radius:10px;padding:10px 12px;
+          transition:background .35s;
+        }
+        .metric-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+        .metric-val{font-size:21px;font-weight:700;line-height:1.1}
+        .metric-sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+        /* ══════════════════════════════════════
+           BADGES
+        ══════════════════════════════════════ */
+        .badge{display:inline-block;font-size:10px;padding:2px 9px;border-radius:20px;font-weight:700}
+        .bg{background:rgba(52,199,89,0.12);color:var(--green);border:0.5px solid rgba(52,199,89,0.28)}
+        .bo{background:rgba(255,159,10,0.12);color:var(--yellow);border:0.5px solid rgba(255,159,10,0.28)}
+        .br{background:rgba(255,59,48,0.12);color:var(--red);border:0.5px solid rgba(255,59,48,0.25)}
+        .bw{background:var(--bg3);color:var(--text2);border:0.5px solid var(--border)}
+        .bb{background:rgba(10,132,255,0.12);color:var(--blue);border:0.5px solid rgba(10,132,255,0.25)}
+
+        /* ══════════════════════════════════════
+           TABLES
+        ══════════════════════════════════════ */
+        .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:0.5px solid var(--border);border-radius:10px;transition:border-color .35s}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th{
+          background:var(--bg3);color:var(--text3);
+          font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+          padding:8px 10px;text-align:left;white-space:nowrap;
+          border-bottom:0.5px solid var(--border);
+          transition:background .35s,color .35s;
+        }
+        td{
+          padding:8px 10px;
+          border-bottom:0.5px solid var(--border2);
+          color:var(--text2);vertical-align:top;line-height:1.55;
+          transition:color .35s;
+        }
+        tr:last-child td{border-bottom:none}
+        tr:hover td{background:rgba(255,107,0,.03)}
+        .total-row td{font-weight:700;color:var(--accent);background:rgba(255,107,0,0.06) !important}
+
+        /* ══════════════════════════════════════
+           TRACKER TABLE
+        ══════════════════════════════════════ */
+        .tracker-outer{
+          overflow-x:auto;overflow-y:auto;
+          -webkit-overflow-scrolling:touch;
+          border:0.5px solid var(--border);border-radius:10px;max-height:420px;
+          transition:border-color .35s;
+        }
+        .trk{border-collapse:separate;border-spacing:0;font-size:11px;white-space:nowrap;min-width:100%}
+        .trk th,.trk td{border-bottom:0.5px solid var(--border2);border-right:0.5px solid var(--border2);padding:7px 8px}
+        .trk th{
+          background:var(--bg3);color:var(--text3);
+          font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+          border-bottom:0.5px solid var(--border);white-space:nowrap;
+          transition:background .35s,color .35s;
+        }
+        .trk td{color:var(--text2);vertical-align:middle;transition:color .35s}
+        .trk tr:hover td{background:rgba(255,107,0,.025)}
+        .s1{position:sticky;left:0;z-index:3;background:var(--bg2) !important;min-width:68px;max-width:68px;width:68px;transition:background .35s}
+        .s2{position:sticky;left:68px;z-index:3;background:var(--bg2) !important;min-width:148px;max-width:148px;width:148px;white-space:normal;word-break:break-word;transition:background .35s}
+        .trk th.s1,.trk th.s2{background:var(--bg3) !important;z-index:5}
+        .trk tr:hover td.s1,.trk tr:hover td.s2{background:var(--bg3) !important}
+        .dc{text-align:center !important;min-width:46px}
+
+        /* ══════════════════════════════════════
+           TIMELINE
+        ══════════════════════════════════════ */
+        .tl{padding-left:18px}
+        .tl-item{position:relative;padding-bottom:14px}
+        .tl-item::before{content:'';position:absolute;left:-15px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+        .tl-item::after{content:'';position:absolute;left:-12px;top:13px;bottom:0;width:1px;background:var(--border)}
+        .tl-item:last-child::after{display:none}
+        .tl-time{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px}
+        .tl-desc{font-size:12px;color:var(--text2);line-height:1.65}
+
+        /* ══════════════════════════════════════
+           CONTROLS + FORMS
+        ══════════════════════════════════════ */
+        .trk-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+        .trk-ctrl label{font-size:11px;color:var(--text3)}
+        .trk-ctrl input[type=date]{
+          background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);
+          color-scheme:var(--cs);border-radius:8px;padding:7px 10px;font-size:12px;
+          font-family:inherit;outline:none;transition:background .35s,border-color .35s,color .35s;
+        }
+        .btn{
+          padding:8px 16px;border-radius:10px;border:none;
+          font-size:13px;font-weight:700;font-family:inherit;
+          cursor:pointer;transition:all .2s;outline:none;min-height:40px;
+        }
+        .btn-sm{padding:5px 10px;font-size:11px;min-height:30px;border-radius:7px}
+        .btn-o{background:var(--accent);color:#fff;box-shadow:0 0 12px var(--accent-glow)}
+        .btn-o:hover,.btn-o:active{filter:brightness(1.12);box-shadow:0 0 20px var(--accent-glow)}
+        .btn-g{background:rgba(52,199,89,0.12);color:var(--green);border:0.5px solid rgba(52,199,89,0.28)}
+        .btn-g:active{background:rgba(52,199,89,0.22)}
+        .btn-w{background:var(--bg3);color:var(--text2);border:0.5px solid var(--border);transition:background .35s,color .35s,border-color .35s}
+        .btn-w:active{background:var(--bg4)}
+        .btn-r{background:rgba(255,59,48,0.10);color:var(--red);border:0.5px solid rgba(255,59,48,0.22)}
+
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+        .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+        @media(max-width:420px){.form-grid-3{grid-template-columns:1fr 1fr}}
+        .form-group{display:flex;flex-direction:column;gap:5px}
+        .form-group label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+        .fi,.fs,.ft{
+          background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);
+          border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;
+          outline:none;width:100%;min-height:42px;
+          transition:border-color .2s,background .35s,color .35s;
+          color-scheme:var(--cs);-webkit-appearance:none;appearance:none;
+        }
+        .fi:focus,.fs:focus,.ft:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+        .fi::placeholder{color:var(--text3)}
+        .fs option{background:var(--bg3);color:var(--text1)}
+        .ft{resize:vertical;min-height:60px}
+        input[type=date],input[type=month]{color:var(--text1);color-scheme:var(--cs)}
+        input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+
+        /* ══════════════════════════════════════
+           SECTION HEADERS
+        ══════════════════════════════════════ */
+        .sec-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+        .sec-num{
+          width:24px;height:24px;border-radius:50%;
+          background:var(--accent);color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          font-size:11px;font-weight:700;flex-shrink:0;
+          box-shadow:0 0 10px var(--accent-glow);
+        }
+        .sec-label{font-size:13px;font-weight:700;color:var(--text1)}
+
+        /* ══════════════════════════════════════
+           NOTES + INFOS
+        ══════════════════════════════════════ */
+        .note{
+          background:rgba(255,107,0,0.07);border-left:3px solid var(--accent);
+          border-radius:0 8px 8px 0;padding:8px 12px;font-size:11px;
+          color:var(--text2);line-height:1.65;margin-top:8px;
+          transition:color .35s;
+        }
+        .info-g{
+          background:rgba(52,199,89,0.08);border:0.5px solid rgba(52,199,89,0.25);
+          border-radius:10px;padding:10px 12px;font-size:12px;color:var(--green);
+          line-height:1.6;margin-bottom:12px;
+        }
+        .info-o{
+          background:rgba(255,159,10,0.08);border:0.5px solid rgba(255,159,10,0.25);
+          border-radius:10px;padding:10px 12px;font-size:12px;color:var(--yellow);
+          line-height:1.6;margin-bottom:12px;
+        }
+
+        /* ══════════════════════════════════════
+           COOKING PILLS
+        ══════════════════════════════════════ */
+        .cook{display:inline-block;background:rgba(10,132,255,0.12);color:var(--blue);border:0.5px solid rgba(10,132,255,0.25);border-radius:6px;padding:1px 7px;font-size:10px;font-weight:600;white-space:nowrap}
+        .temp{display:block;background:rgba(255,159,10,0.10);color:var(--yellow);border:0.5px solid rgba(255,159,10,0.22);border-radius:6px;padding:1px 7px;font-size:10px;font-weight:600;white-space:nowrap;margin-top:3px}
+
+        /* ══════════════════════════════════════
+           SUMMARY
+        ══════════════════════════════════════ */
+        .sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px}
+        .sum-box{background:var(--bg3);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center;transition:background .35s}
+        .sv{font-size:18px;font-weight:700}
+        .sl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+        .sp{font-size:10px;color:var(--text3);margin-top:1px}
+
+        /* ══════════════════════════════════════
+           MACRO BAR + MISC
+        ══════════════════════════════════════ */
+        .macro-bar{height:7px;border-radius:4px;overflow:hidden;display:flex;margin:8px 0}
+        .divider{height:0.5px;background:var(--border);margin:12px 0}
+        .flash{font-size:10px;color:var(--green);margin-left:8px;display:none}
+        .flash.on{display:inline}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+        /* ══════════════════════════════════════
+           TASK/EXPENSE STATUS COLORS
+        ══════════════════════════════════════ */
+        .ph{color:var(--red);font-weight:700}.pm{color:var(--yellow);font-weight:600}.pl{color:var(--green);font-weight:600}
+        .st-todo{color:var(--text3)}.st-prog{color:var(--yellow)}.st-done{color:var(--green)}
+        .dn{color:var(--red);font-weight:700}.ds{color:var(--yellow);font-weight:600}.dok{color:var(--green)}
+        .t-need{color:var(--blue)}.t-want{color:var(--yellow)}.t-desire{color:var(--purple)}
+        .amt{color:var(--green);font-weight:700;font-variant-numeric:tabular-nums}
+
+        /* ══════════════════════════════════════
+           SCORE CIRCLES
+        ══════════════════════════════════════ */
+        .score-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;flex-wrap:nowrap}
+        .score-circle{display:flex;flex-direction:column;align-items:center}
+        .score-circle svg{display:block;overflow:visible}
+        .score-sm svg{width:68px;height:68px}
+        .score-md svg{width:84px;height:84px}
+        .score-lg svg{width:108px;height:108px}
+        .s-label{text-align:center;font-size:10px;font-weight:600;color:var(--text3);margin-top:5px;text-transform:uppercase;letter-spacing:.4px}
+
+        /* ══════════════════════════════════════
+           TRI-STATE BUTTON
+        ══════════════════════════════════════ */
+        .tri-btn{
+          width:28px;height:28px;border:none;border-radius:6px;
+          background:var(--bg3);cursor:pointer;font-size:14px;
+          display:flex;align-items:center;justify-content:center;
+          margin:0 auto;transition:background .15s;outline:none;padding:0;
+        }
+        .tri-btn:active{transform:scale(0.85)}
+        .tri-btn[disabled]{cursor:default;opacity:0.7;pointer-events:none}
+
+        /* ═══ TASK REMINDER MODAL ═══ */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px)}
+        .modal-overlay.open{display:flex}
+        .modal-sheet{background:var(--bg2);border-radius:22px 22px 0 0;padding:20px 16px 36px;width:100%;max-width:480px;transition:background .35s}
+        .modal-title{font-size:15px;font-weight:700;color:var(--text1);margin-bottom:4px}
+        .modal-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+        .modal-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+        .modal-opt{background:var(--bg3);border:0.5px solid var(--border);color:var(--text2);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
+        .modal-opt:active,.modal-opt.sel{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 0 10px var(--accent-glow)}
+        /* ═══ APP PROMPT MODAL ═══ */
+        .aprompt-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:2000;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px)}
+        .aprompt-overlay.open{display:flex}
+        .aprompt-sheet{background:var(--bg2);border-radius:22px 22px 0 0;padding:22px 18px 38px;width:100%;max-width:480px}
+        .aprompt-title{font-size:15px;font-weight:700;color:var(--text1);margin-bottom:6px}
+        .aprompt-sub{font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6}
+        .aprompt-input{background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:10px;padding:12px 14px;font-size:15px;font-family:inherit;width:100%;outline:none;margin-bottom:14px;min-height:44px;-webkit-appearance:none}
+        .aprompt-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+        .aprompt-btn-row{display:flex;gap:8px}
+        .modal-cancel{width:100%;background:var(--bg3);border:0.5px solid var(--border);color:var(--red);border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px}
+        .modal-dt-row{display:flex;gap:8px;margin-bottom:8px}
+
+        /* ═══ HABIT TAB ═══ */
+        .habit-streak{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+        .habit-day{width:14px;height:14px;border-radius:3px;background:var(--bg3);border:0.5px solid var(--border)}
+        .habit-day.done{background:var(--green);box-shadow:0 0 5px rgba(52,199,89,0.5)}
+        .habit-day.miss{background:var(--red);box-shadow:0 0 4px rgba(255,59,48,0.4)}
+
+        /* ═══ SHOPPING TAB ═══ */
+        .shop-sum{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+        .shop-sum-box{flex:1;min-width:120px;background:var(--bg3);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+
+        /* ══════════════════════════════════════
+           NOTIFICATION BANNER
+        ══════════════════════════════════════ */
+        .notif-banner{
+          background:var(--yellow);color:#000;padding:10px 16px;
+          font-size:13px;font-weight:600;text-align:center;
+          position:sticky;top:0;z-index:500;display:none;
+        }
+        .notif-banner.show{display:block}
+
+        /* ══════════════════════════════════════
+           MONTH PICKER MODAL
+        ══════════════════════════════════════ */
+        .mpicker-overlay{
+          display:none;position:fixed;inset:0;
+          background:rgba(0,0,0,0.6);z-index:1000;
+          align-items:flex-end;justify-content:center;
+          backdrop-filter:blur(4px);
+        }
+        .mpicker-overlay.open{display:flex}
+        .mpicker-sheet{
+          background:var(--bg2);border-radius:20px 20px 0 0;
+          padding:16px;width:100%;max-width:480px;
+          transition:background .35s;
+        }
+        .mpicker-title{font-size:13px;font-weight:700;color:var(--text2);text-align:center;margin-bottom:14px}
+        .mpicker-year{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px}
+        .mpicker-year button{background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;min-width:36px}
+        .mpicker-year span{font-size:18px;font-weight:700;color:var(--text1);min-width:60px;text-align:center}
+        .mpicker-months{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+        .mpicker-months button{
+          background:var(--bg3);border:0.5px solid var(--border);color:var(--text2);
+          border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;
+          cursor:pointer;font-family:inherit;transition:all .15s;
+        }
+        .mpicker-months button.sel{
+          background:var(--accent);color:#fff;border-color:var(--accent);
+          box-shadow:0 0 10px var(--accent-glow);
+        }
+        .mpicker-months button:active{transform:scale(0.94)}
+        .mpicker-cancel{width:100%;background:var(--bg3);border:0.5px solid var(--border);color:var(--text2);border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+
+        /* ══════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════ */
+        @media(max-width:500px){
+          .form-grid{grid-template-columns:1fr 1fr !important}
+          .form-grid-3{grid-template-columns:1fr 1fr !important}
+          .row2{grid-template-columns:1fr !important}
+          .metrics{grid-template-columns:1fr 1fr}
+          table{font-size:12px}
+          td,th{padding:7px 8px}
+          .header-title{font-size:18px}
+          .score-sm svg{width:60px;height:60px}
+          .score-md svg{width:74px;height:74px}
+          .score-lg svg{width:94px;height:94px}
+        }
+    </style>
+</head>
+<body>
+
+<div class="notif-banner" id="notif_banner">
+    ⏰ Reminder: Log yesterday's schedule & expenses before 11 AM!
+    <button onclick="document.getElementById('notif_banner').style.display='none'" style="background:none;border:none;color:#000;font-size:16px;cursor:pointer;margin-left:8px;font-weight:700">✕</button>
+</div>
+<div class="header">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="header-title">Health & Life Dashboard</div>
+        <button onclick="toggleTheme()" id="theme_btn" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🌙 Dark</button>
+    </div>
+    <div class="tabs">
+        <button class="tab active" id="tab_overview" onclick="showTab('overview')">Overview</button>
+        <button class="tab" id="tab_schedule" onclick="showTab('schedule')">Schedule</button>
+        <button class="tab" id="tab_meal1" onclick="showTab('meal1')">Meal 1</button>
+        <button class="tab" id="tab_meal2" onclick="showTab('meal2')">Meal 2</button>
+        <button class="tab" id="tab_grocery" onclick="showTab('grocery')">Grocery</button>
+        <button class="tab" id="tab_tasks" onclick="showTab('tasks')">Tasks</button>
+        <button class="tab" id="tab_expenses" onclick="showTab('expenses')">Expenses</button>
+        <button class="tab" id="tab_habits" onclick="showTab('habits')">Daily Forge</button>
+        <button class="tab" id="tab_shopping" onclick="showTab('shopping')">Wish & Buy</button>
+    </div>
+</div>
+
+<div class="content">
+
+    <!-- ═══ OVERVIEW ═══ -->
+    <div id="sec_overview" class="section">
+        <div class="metrics">
+            <div class="metric">
+              <div class="metric-lbl">Current Weight</div>
+              <div class="metric-val" id="ov_wt" style="color:#60a5fa">—</div>
+              <div class="metric-sub" id="ov_wt_sub">Not logged yet</div>
+              <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+                <span style="font-size:10px;color:var(--text3)">Target:</span>
+                <span id="ov_wt_tgt" style="font-size:11px;color:var(--text3)" onclick="editTarget('wt')" style="cursor:pointer">64 kg ✏️</span>
+              </div>
+            </div>
+            <div class="metric">
+              <div class="metric-lbl">Body Fat</div>
+              <div class="metric-val" id="ov_fat" style="color:#f87171">—</div>
+              <div class="metric-sub" id="ov_fat_sub">Not logged yet</div>
+              <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+                <span style="font-size:10px;color:var(--text3)">Target:</span>
+                <span id="ov_fat_tgt" style="font-size:11px;color:var(--text3);cursor:pointer" onclick="editTarget('fat')">10–12% ✏️</span>
+              </div>
+            </div>
+            <div class="metric"><div class="metric-lbl">Daily Calories</div><div class="metric-val" style="color:#ff6b00">1,600</div><div class="metric-sub">~450 kcal deficit</div></div>
+            <div class="metric"><div class="metric-lbl">Protein Daily</div><div class="metric-val" style="color:#4ade80">~130g</div><div class="metric-sub">2g / kg body wt</div></div>
+            <div class="metric"><div class="metric-lbl">Carbs Daily</div><div class="metric-val" style="color:#fbbf24">~130g</div><div class="metric-sub">Complex only</div></div>
+            <div class="metric"><div class="metric-lbl">Fats Daily</div><div class="metric-val" style="color:#f472b6">~50g</div><div class="metric-sub">Good fats only</div></div>
+            <div class="metric"><div class="metric-lbl">Eating Window</div><div class="metric-val" style="color:#2dd4bf">9 hrs</div><div class="metric-sub">1:30 PM – 8:30 PM</div></div>
+            <div class="metric"><div class="metric-lbl">Sleep Window</div><div class="metric-val" style="color:#a78bfa">8 hrs</div><div class="metric-sub">10:30 PM – 6:30 AM</div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Daily Macro Split — 1,600 kcal</div>
+            <div class="macro-bar"><div style="width:32%;background:#4ade80"></div><div style="width:32%;background:#fbbf24"></div><div style="width:28%;background:#f472b6"></div><div style="width:8%;background:#333"></div></div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#8b95aa;margin-top:6px">
+                <span><span style="color:#4ade80">■</span> Protein 130g · 33%</span>
+                <span><span style="color:#fbbf24">■</span> Carbs 130g · 33%</span>
+                <span><span style="color:#f472b6">■</span> Fat 50g · 28%</span>
+                <span><span style="color:#333">■</span> Fibre ~25g</span>
+            </div>
+        </div>
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+                <div class="card-title" style="margin-bottom:0">🏆 Score of the Day</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <label style="font-size:11px;color:var(--text3)">Date</label>
+                    <input type="date" id="score_date" class="fi" style="padding:5px 10px;font-size:12px;width:auto" onchange="renderScores()">
+                </div>
+            </div>
+            <div class="score-row" id="score_row">
+                <!-- rendered by JS -->
+            </div>
+            <div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                <button class="btn btn-w btn-sm" onclick="setScoreDate(-1)">◀ Prev day</button>
+                <button class="btn btn-w btn-sm" onclick="setScoreDate(0)">Today</button>
+                <button class="btn btn-w btn-sm" onclick="shareScore()">📤 Share</button>
+            </div>
+            <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;line-height:1.6">
+                Circles show score for selected date. Select any past date to view history.
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">⚖️ Weight Progress Log</div>
+            <div class="form-grid" style="gap:8px;margin-bottom:10px">
+                <div class="form-group"><label>Date</label><input type="date" class="fi" id="wp_date"></div>
+                <div class="form-group"><label>Weight (kg)</label><input type="number" class="fi" id="wp_wt" placeholder="68.0" step="0.1"></div>
+                <div class="form-group"><label>Fat %</label><input type="number" class="fi" id="wp_fat" placeholder="25.0" step="0.1"></div>
+                <div class="form-group"><label>Fat (kg)</label><input type="number" class="fi" id="wp_fatkg" placeholder="auto" step="0.1" id="wp_fatkg_disp" readonly style="opacity:.6"></div>
+            </div>
+            <button class="btn btn-o" onclick="addWeight()" style="margin-bottom:12px">+ Log Weight</button>
+            <div class="table-wrap">
+                <table id="wp_table">
+                    <tr><th>Date</th><th>Weight (kg)</th><th>Change</th><th>Fat %</th><th>Fat (kg)</th><th>Del</th></tr>
+                    <tr><td colspan="6" style="text-align:center;color:#555;padding:16px">No entries yet — log your first weight above</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ SCHEDULE ═══ -->
+    <div id="sec_schedule" class="section">
+        <div class="card">
+            <div class="card-title">Daily Routine</div>
+            <div class="tl">
+                <div class="tl-item"><div class="tl-time">6:30 AM — Wakeup</div><div class="tl-desc">Wake up. Drink 500–800ml warm water immediately. Do not eat — fasted state maximises fat burn.</div></div>
+                <div class="tl-item"><div class="tl-time">6:30–7:10 AM — Morning Cardio</div><div class="tl-desc">Cycling / jogging / brisk walking outdoors 30–40 min. Fasted cardio = direct fat burn. Target heart rate 120–140 BPM.</div></div>
+                <div class="tl-item"><div class="tl-time">7:15–9:30 AM — Freshen up + Meal 1 Prep</div><div class="tl-desc">Shower. Steam/boil veggies. Blend dressing. Assemble salad box. Pack lunch box + dressing jar separately.</div></div>
+                <div class="tl-item"><div class="tl-time">10:00 AM — Commute to Office</div><div class="tl-desc">Carry Meal 1 box + dressing jar + water bottle. Continue sipping water during commute.</div></div>
+                <div class="tl-item"><div class="tl-time">10:00–1:30 PM — Work</div><div class="tl-desc">No snacking — extend fasted window for maximum fat loss. Sip water.</div></div>
+                <div class="tl-item"><div class="tl-time">1:30–2:30 PM — Lunch (Meal 1)</div><div class="tl-desc">Start with lemon water. Then eat full salad bowl — pour dressing when eating. Heat veggies in office oven if available. Eat slowly.</div></div>
+                <div class="tl-item"><div class="tl-time">2:30–3:30 PM — Work</div><div class="tl-desc">Sip water. Post-meal digestion walk if possible (5 min).</div></div>
+                <div class="tl-item"><div class="tl-time">3:30–4:00 PM — Green Tea</div><div class="tl-desc">1 cup green tea (no sugar, no milk). Boosts afternoon metabolism, reduces hunger.</div></div>
+                <div class="tl-item"><div class="tl-time">4:00–4:30 PM — Work</div></div>
+                <div class="tl-item"><div class="tl-time">4:30–5:00 PM — Commute Home</div></div>
+                <div class="tl-item"><div class="tl-time">5:00–5:30 PM — Rest + Pre-Workout Snack</div><div class="tl-desc">1 ripe banana (potassium, B6, fast energy) OR 5 soaked dates + 5 almonds. Rest 20–25 min before gym.</div></div>
+                <div class="tl-item"><div class="tl-time">5:30–6:30 PM — Gym</div><div class="tl-desc">Strength training — compound lifts: squats, deadlifts, bench, rows. 45–60 min. Builds muscle while in deficit.</div></div>
+                <div class="tl-item"><div class="tl-time">6:30–7:00 PM — Coconut Water + Rest</div><div class="tl-desc">200ml coconut water immediately post-gym. Replenishes electrolytes, potassium. Shower.</div></div>
+                <div class="tl-item"><div class="tl-time">7:00–7:30 PM — Meal 2 Prep</div><div class="tl-desc">Start chicken chunks pan-fry. Boil sweet potato + egg simultaneously. Takes ~20–25 min total.</div></div>
+                <div class="tl-item"><div class="tl-time">8:00–8:30 PM — Dinner (Meal 2)</div><div class="tl-desc">Eat pan-fried chicken + veggie bowl. Must finish by 8:30 PM latest (close eating window).</div></div>
+                <div class="tl-item"><div class="tl-time">8:30–10:30 PM — Wind Down</div><div class="tl-desc">Soak almonds + walnuts for tomorrow. Light stretching. Skin care. Dim lights from 10 PM. No screens 30 min before sleep.</div></div>
+                <div class="tl-item"><div class="tl-time">10:30 PM — Sleep</div><div class="tl-desc">8 hours. Growth hormone peaks during sleep — critical for fat loss and muscle repair.</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">Daily Habit Tracker <span class="flash" id="fl_sched">✓ Saved</span></div>
+                <div style="font-size:11px;color:var(--text3)" id="sched_date_label"></div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap once = ✅ done &nbsp;|&nbsp; Tap again = ❌ missed &nbsp;|&nbsp; Tap again = reset</div>
+            <div class="tracker-outer" id="sched_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📂 Past Schedule Data</div>
+            <div class="trk-ctrl">
+                <label>From <input type="date" id="sd_s" value="2025-04-27"></label>
+                <label>To <input type="date" id="sd_e" value="2025-05-27"></label>
+                <button class="btn btn-o btn-sm" onclick="buildSchedPast()">Fetch</button>
+            </div>
+            <div class="tracker-outer" id="sched_past_wrap"></div>
+        </div>
+    </div>
+
+    <!-- ═══ MEAL 1 ═══ -->
+    <div id="sec_meal1" class="section">
+
+        <div class="card">
+            <div class="sec-header"><div class="sec-num">1</div><div class="sec-label">Preparation Guide</div></div>
+            <div class="tl">
+                <div class="tl-item"><div class="tl-time">Night Before (5 min)</div><div class="tl-desc">Soak 10 almonds and 4 walnut halves in separate small bowls. Cover. Soak overnight 8 hours.</div></div>
+                <div class="tl-item"><div class="tl-time">Morning Step 1 — Boil Beetroot (20 min · 800W)</div><div class="tl-desc">Peel and dice beetroot. Add to pot with water to cover. Induction 800W. Boil 20 min. Drain. Cool. (Longest step — start first.)</div></div>
+                <div class="tl-item"><div class="tl-time">Morning Step 2 — Steam all veggies (8–10 min · 500W)</div><div class="tl-desc">Place carrot pieces in steamer basket first (needs 8 min). After 2 min add whole green beans (need 6 min). After 3 more min add broccoli florets (need 5 min). Final 2 min add capsicum. All done together in one steamer. Induction 500W throughout.</div></div>
+                <div class="tl-item"><div class="tl-time">Morning Step 3 — Blend Dressing (2 min)</div><div class="tl-desc">Peel soaked almonds (slide skin off). Add to blender: paneer 40g + curd 30g + lemon juice 10ml + 2 garlic cloves (peeled) + 1 green chilli + coriander + salt to taste. Blend smooth. Pour into small jar with lid.</div></div>
+                <div class="tl-item"><div class="tl-time">Morning Step 4 — Assemble Salad Box</div><div class="tl-desc">In large airtight container: layer steamed carrot, beans, broccoli, capsicum, boiled beetroot. Add raw tomato (seeds removed) and onion rings. Place soaked almonds + walnut halves on top. Scatter chia seeds, ground flax, pumpkin seeds, sunflower seeds. Seal box. Carry dressing jar SEPARATELY — pour only when eating.</div></div>
+            </div>
+            <div class="note">Do NOT pour dressing into box before leaving home — it makes everything soggy by lunchtime. Always carry in separate jar and mix at office just before eating.</div>
+        </div>
+
+        <div class="card">
+            <div class="sec-header"><div class="sec-num">2</div><div class="sec-label">Meal 1 — Nutrition Summary</div></div>
+            <div class="sum-grid">
+                <div class="sum-box"><div class="sv" style="color:#ff6b00">725</div><div class="sl">Total kcal</div><div class="sp">45% of daily</div></div>
+                <div class="sum-box"><div class="sv" style="color:#4ade80">~34g</div><div class="sl">Protein</div><div class="sp">26% of target</div></div>
+                <div class="sum-box"><div class="sv" style="color:#fbbf24">~52g</div><div class="sl">Carbs</div><div class="sp">Complex only</div></div>
+                <div class="sum-box"><div class="sv" style="color:#f472b6">~40g</div><div class="sl">Fats</div><div class="sp">Omega-3 rich</div></div>
+                <div class="sum-box"><div class="sv" style="color:#2dd4bf">~18g</div><div class="sl">Fibre</div><div class="sp">72% daily need</div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="card-title">Micronutrients Covered</div>
+            <div class="row2" style="gap:6px;font-size:12px">
+                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Vit A · Beta-carotene (carrot)<br><span style="color:#4ade80">✓</span> Vit C (broccoli, capsicum, tomato)<br><span style="color:#4ade80">✓</span> Vit E (almonds, sunflower)<br><span style="color:#4ade80">✓</span> Vit K (broccoli, beans, coriander)<br><span style="color:#4ade80">✓</span> B12 (paneer, curd)<br><span style="color:#4ade80">✓</span> Folate (beans, broccoli, beetroot)</div>
+                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Calcium (almonds, chia, paneer)<br><span style="color:#4ade80">✓</span> Iron (beans, pumpkin seeds)<br><span style="color:#4ade80">✓</span> Magnesium (pumpkin, almonds)<br><span style="color:#4ade80">✓</span> Zinc (pumpkin seeds, beans)<br><span style="color:#4ade80">✓</span> Omega-3 (walnuts, flax, chia)<br><span style="color:#4ade80">✓</span> Probiotics (curd in dressing)</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">Meal 1 Ingredient Tracker <span class="flash" id="fl_m1">✓ Saved</span></div>
+                <div style="font-size:11px;color:var(--text3)" id="m1_date_label"></div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap once = ✅ done &nbsp;|&nbsp; Tap again = ❌ missed &nbsp;|&nbsp; Tap again = reset</div>
+            <div class="tracker-outer" id="m1_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📂 Past Meal 1 Data</div>
+            <div class="trk-ctrl">
+                <label>From <input type="date" id="m1_s" value="2025-04-27"></label>
+                <label>To <input type="date" id="m1_e" value="2025-05-27"></label>
+                <button class="btn btn-o btn-sm" onclick="buildM1Past()">Fetch</button>
+            </div>
+            <div class="tracker-outer" id="m1_past_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="sec-header"><div class="sec-num">3</div><div class="sec-label">Ingredients · Quantity · Cooking · Nutrients</div></div>
+            <div class="table-wrap">
+                <table>
+                    <tr><th>Ingredient</th><th>Qty</th><th>Cal</th><th>How to Cook</th><th>Induction</th><th>Key Nutrients & Benefits</th></tr>
+                    <tr>
+                        <td><strong>Carrot</strong></td><td>80g</td><td>33</td>
+                        <td><span class="cook">Steam</span></td>
+                        <td><span class="temp">500W · 8 min · Steam</span></td>
+                        <td>Beta-carotene (Vit A → eye health, night vision, skin glow). Steaming retains 25% more beta-carotene than boiling. Vit K, potassium, fibre.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Beetroot</strong></td><td>60g</td><td>26</td>
+                        <td><span class="cook">Boil</span></td>
+                        <td><span class="temp">800W · 20 min · Boil</span></td>
+                        <td>Nitrates (dilate blood vessels → heart health, lower BP, better workout endurance). Folate (brain), iron, betalains (liver detox, anti-inflammatory, clears skin).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Broccoli</strong></td><td>80g</td><td>27</td>
+                        <td><span class="cook">Steam</span></td>
+                        <td><span class="temp">500W · 5 min · Steam</span></td>
+                        <td>Sulforaphane (liver detox, anti-cancer). Vit C (collagen, skin). Vit K (bones). Calcium. Do NOT overboil — destroys 70% of sulforaphane. Steam only.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Whole Green Beans</strong></td><td>80g</td><td>27</td>
+                        <td><span class="cook">Steam</span></td>
+                        <td><span class="temp">500W · 6 min · Steam</span></td>
+                        <td>Fibre (gut bacteria food), Vit C, Vit K (bone density), folate, iron, silicon (bone strength). Steaming keeps crunch and colour — do not boil into mush.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Capsicum (green)</strong></td><td>50g</td><td>10</td>
+                        <td><span class="cook">Steam</span></td>
+                        <td><span class="temp">500W · 3 min · Steam</span></td>
+                        <td>Highest Vit C of any capsicum variety. Vit B6, antioxidants. Eat al dente (slight crunch) — preserves Vit C best. Over-steaming destroys Vit C.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tomato</strong></td><td>80g</td><td>14</td>
+                        <td><span class="cook">Raw</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>Lycopene (UV skin protection, reduces acne, anti-aging). Vit C, potassium, Vit K. Eating with seeds/nuts increases lycopene absorption 4x.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Onion</strong></td><td>40g</td><td>16</td>
+                        <td><span class="cook">Raw</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>Quercetin (anti-inflammatory, reduces histamine/allergies, nasal health). Prebiotic fibre (feeds gut bacteria). Sulphur (hair keratin, skin collagen synthesis).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Almonds (soaked, peeled)</strong></td><td>10 almonds · 12g</td><td>70</td>
+                        <td><span class="cook">Soak overnight, peel</span></td>
+                        <td><span class="temp">No heat · Soak 8h</span></td>
+                        <td>10/day is the ideal dose — proven for brain and heart health without excess calories (70 kcal). Soaking removes tannins → 2x better absorption. Vit E (skin), Mg (sleep, muscle), calcium (bones), L-arginine (blood circulation). Peel brown skin before eating.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Walnuts (soaked)</strong></td><td>4 halves · 14g</td><td>92</td>
+                        <td><span class="cook">Soak 6h</span></td>
+                        <td><span class="temp">No heat · Soak 6h</span></td>
+                        <td>4 halves/day = optimal omega-3 dose without excess calories. ALA omega-3 (brain, anti-inflammatory, reduces myopia progression, skin barrier). Melatonin (sleep quality), antioxidants. Only nut with significant plant omega-3.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Chia Seeds</strong></td><td>10g</td><td>49</td>
+                        <td><span class="cook">Raw, scatter on top</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>ALA omega-3 (brain, eyes, skin). Calcium (more than milk per gram). Soluble fibre (forms gel → slows glucose spike → no energy crash after lunch). Boron (bone density).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pumpkin Seeds</strong></td><td>15g</td><td>83</td>
+                        <td><span class="cook">Raw, scatter on top</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>15g/day is ideal — provides 2mg zinc (30% daily need). Zinc = testosterone support, skin sebum control, hair follicle strength. Mg, iron, tryptophan (serotonin precursor → mood, sleep). Best seed for men's hormonal health.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Flax Seeds (ground)</strong></td><td>10g</td><td>55</td>
+                        <td><span class="cook">Grind fresh, scatter</span></td>
+                        <td><span class="temp">No heat · Grind fresh</span></td>
+                        <td>MUST grind — whole seeds pass through undigested. 10g/day is the recommended dose. Lignans (hormone balance), ALA omega-3, soluble fibre (lowers LDL by 10–15%). Improves skin barrier. Store ground seeds in fridge.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sunflower Seeds</strong></td><td>10g</td><td>58</td>
+                        <td><span class="cook">Raw, scatter on top</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>10g/day is sufficient — provides Vit E (15% daily need). Vit E (skin elasticity, anti-aging, anti-acne). Selenium (thyroid function, immunity). B1 (energy). Copper (melanin production → black hair pigment).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Paneer (dressing)</strong></td><td>40g</td><td>119</td>
+                        <td><span class="cook">Raw, blend</span></td>
+                        <td><span class="temp">No heat · Blend raw</span></td>
+                        <td>Complete protein (all amino acids). Calcium + phosphorus (teeth, bones). B12 (nerve function, energy). Creamy base for dressing — adds satiety.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Curd (dressing)</strong></td><td>30g</td><td>29</td>
+                        <td><span class="cook">Raw, blend</span></td>
+                        <td><span class="temp">No heat · Blend raw</span></td>
+                        <td>Probiotics (Lactobacillus → gut microbiome → better digestion, clearer skin, stronger immunity). Calcium, B12, casein protein.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Garlic (dressing)</strong></td><td>2 cloves · 6g</td><td>9</td>
+                        <td><span class="cook">Raw, blend</span></td>
+                        <td><span class="temp">No heat · Blend raw</span></td>
+                        <td>Raw garlic has 3x more allicin than cooked. Allicin = lowers LDL cholesterol, antibacterial (clears acne bacteria), boosts immunity, improves gut health.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Green Chilli (dressing)</strong></td><td>1 small · 5g</td><td>2</td>
+                        <td><span class="cook">Raw, blend</span></td>
+                        <td><span class="temp">No heat · Blend raw</span></td>
+                        <td>Capsaicin — thermogenic effect boosts metabolic rate 4–5%. Vit C. Anti-inflammatory. Adjust heat to your comfort.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Coriander (dressing)</strong></td><td>10g</td><td>2</td>
+                        <td><span class="cook">Raw, blend</span></td>
+                        <td><span class="temp">No heat · Blend raw</span></td>
+                        <td>Vit K (bone density, blood clotting). Heavy metal detox (binds toxins in gut). Digestive enzyme stimulant. Anti-inflammatory.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lemon Juice (dressing)</strong></td><td>10ml</td><td>3</td>
+                        <td><span class="cook">Fresh squeeze</span></td>
+                        <td><span class="temp">No heat · Fresh</span></td>
+                        <td>Vit C (collagen → skin glow, fades spots). Citric acid boosts iron absorption from veggies by 3x. Liver detox. Kick-starts digestion.</td>
+                    </tr>
+                    <tr class="total-row"><td colspan="2"><strong>TOTAL MEAL 1</strong></td><td><strong>725</strong></td><td colspan="3">~45% of daily 1,600 kcal</td></tr>
+                </table>
+            </div>
+            <div class="note">Steaming guide (Prestige Iris): Add 1.5 cups water to pot. Place steel steamer basket inside. Set 500W. Cover lid. Start timer when steam rises. Veggies should be tender-firm — not mushy. For beetroot (no basket needed) — boil directly in water at 800W for 20 min.</div>
+        </div>
+    </div>
+
+    <!-- ═══ MEAL 2 ═══ -->
+    <div id="sec_meal2" class="section">
+
+        <div class="card">
+            <div class="sec-header"><div class="sec-num">1</div><div class="sec-label">Preparation Guide (20–25 min total)</div></div>
+            <div class="tl">
+                <div class="tl-item"><div class="tl-time">Step 1 — Marinate Chicken (before gym or on return)</div><div class="tl-desc">Ask butcher to cut breast into curry-size chunks (~3–4cm). Mix marinade: ½ tsp salt + ½ tsp red chilli powder + ¼ tsp turmeric + 1 tbsp ginger-garlic paste + juice of ½ lemon. Coat chunks well. Marinate minimum 30 min. Best: marinate morning in fridge, ready when you return from gym.</div></div>
+                <div class="tl-item"><div class="tl-time">Step 2 — Boil Sweet Potato + Egg simultaneously (12 min · 800W)</div><div class="tl-desc">Add sweet potato chunks + 1 egg to pot. Fill water to cover. Induction 800W. Start timer. Remove egg at 12 min exactly (hard boil). Continue potato 2–3 more min if needed. Cool egg in cold water, peel.</div></div>
+                <div class="tl-item"><div class="tl-time">Step 3 — Pan-fry Chicken Chunks (10–12 min)</div><div class="tl-desc">Heat pan on 300W for 1 min. Add 1 tsp coconut oil. Place marinated chunks in single layer — do not overcrowd. Set 500W. Cook 5–6 min stirring occasionally until all sides are sealed and slightly charred. Chunks cook faster than whole breast — done when no pink inside. Remove and keep aside.</div></div>
+                <div class="tl-item"><div class="tl-time">Step 4 — Stir-fry Veggies in same pan (7 min · 500W)</div><div class="tl-desc">Same pan (residual marinade flavour is the seasoning). Add onion first → cook 2 min. Add whole beans + capsicum → cook 2 min. Add broccoli last → cook 2 min. Stir constantly. Season with salt + black pepper. Veggies should have slight char, not soggy. Remove from heat.</div></div>
+                <div class="tl-item"><div class="tl-time">Step 5 — Plate</div><div class="tl-desc">Place chicken chunks + veggie stir-fry in bowl. Add boiled sweet potato alongside. Halve the egg, place on side. Add 80g cold curd in small bowl on side. Sprinkle 10g pumpkin seeds + 8g ground flax over chicken. Squeeze lemon. Eat immediately — do not reheat.</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="sec-header"><div class="sec-num">2</div><div class="sec-label">Meal 2 — Nutrition Summary</div></div>
+            <div class="sum-grid">
+                <div class="sum-box"><div class="sv" style="color:#ff6b00">655</div><div class="sl">Total kcal</div><div class="sp">41% of daily</div></div>
+                <div class="sum-box"><div class="sv" style="color:#4ade80">~72g</div><div class="sl">Protein</div><div class="sp">55% of target</div></div>
+                <div class="sum-box"><div class="sv" style="color:#fbbf24">~52g</div><div class="sl">Carbs</div><div class="sp">Post-gym glycogen</div></div>
+                <div class="sum-box"><div class="sv" style="color:#f472b6">~18g</div><div class="sl">Fats</div><div class="sp">Lean + good</div></div>
+                <div class="sum-box"><div class="sv" style="color:#2dd4bf">~9g</div><div class="sl">Fibre</div><div class="sp">Overnight gut</div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="card-title">Micronutrients Covered</div>
+            <div class="row2" style="gap:6px;font-size:12px">
+                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Complete protein all amino acids<br><span style="color:#4ade80">✓</span> Curcumin anti-inflammatory (turmeric)<br><span style="color:#4ade80">✓</span> Vit D (egg yolk)<br><span style="color:#4ade80">✓</span> Lutein + Zeaxanthin (egg, capsicum)<br><span style="color:#4ade80">✓</span> Beta-carotene / Vit A (sweet potato)<br><span style="color:#4ade80">✓</span> B12 (chicken, curd, egg)</div>
+                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Zinc + testosterone (pumpkin seeds)<br><span style="color:#4ade80">✓</span> Omega-3 overnight repair (flax)<br><span style="color:#4ade80">✓</span> Casein → overnight muscle (curd)<br><span style="color:#4ade80">✓</span> Potassium muscle cramps (sweet potato)<br><span style="color:#4ade80">✓</span> Selenium (chicken, egg)<br><span style="color:#4ade80">✓</span> Tryptophan → sleep (pumpkin)</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">Meal 2 Ingredient Tracker <span class="flash" id="fl_m2">✓ Saved</span></div>
+                <div style="font-size:11px;color:var(--text3)" id="m2_date_label"></div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap once = ✅ done &nbsp;|&nbsp; Tap again = ❌ missed &nbsp;|&nbsp; Tap again = reset</div>
+            <div class="tracker-outer" id="m2_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📂 Past Meal 2 Data</div>
+            <div class="trk-ctrl">
+                <label>From <input type="date" id="m2_s" value="2025-04-27"></label>
+                <label>To <input type="date" id="m2_e" value="2025-05-27"></label>
+                <button class="btn btn-o btn-sm" onclick="buildM2Past()">Fetch</button>
+            </div>
+            <div class="tracker-outer" id="m2_past_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="sec-header"><div class="sec-num">3</div><div class="sec-label">Ingredients · Quantity · Cooking · Nutrients</div></div>
+            <div class="table-wrap">
+                <table>
+                    <tr><th>Ingredient</th><th>Qty</th><th>Cal</th><th>How to Cook</th><th>Induction</th><th>Key Nutrients & Benefits</th></tr>
+                    <tr>
+                        <td><strong>Chicken Breast (chunks)</strong></td><td>180g</td><td>198</td>
+                        <td><span class="cook">Pan-fry marinated</span></td>
+                        <td><span class="temp">300W heat oil, 500W cook</span></td>
+                        <td>Complete protein (all 9 essential amino acids). B12 (nerve health, energy). Niacin B3 (skin repair). Selenium (thyroid, immunity). Zinc (testosterone). Phosphorus (bones). Lean — only 3g fat per 180g.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Whole Green Beans</strong></td><td>60g</td><td>20</td>
+                        <td><span class="cook">Pan-fry 4 min</span></td>
+                        <td><span class="temp">500W · 4 min · Pan-fry</span></td>
+                        <td>Fibre (overnight gut recovery), Vit C, Vit K, folate, iron. Pan-frying after chicken uses the flavoured oil — no extra oil needed.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Capsicum (red or yellow)</strong></td><td>60g</td><td>19</td>
+                        <td><span class="cook">Pan-fry 3 min</span></td>
+                        <td><span class="temp">500W · 3 min · Pan-fry</span></td>
+                        <td>Red/yellow capsicum = highest Vit C of all vegetables (190mg/100g). Vit A, lutein, zeaxanthin (eye health — directly supports myopia management). Carotenoids for skin.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Onion</strong></td><td>50g</td><td>20</td>
+                        <td><span class="cook">Pan-fry till golden</span></td>
+                        <td><span class="temp">500W · 5 min · Pan-fry</span></td>
+                        <td>Quercetin + sulphur. Chromium (blood sugar regulation post-meal). Prebiotic fibre. Caramelising brings out natural sweetness — makes the dish taste great without any sauce.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Broccoli</strong></td><td>80g</td><td>27</td>
+                        <td><span class="cook">Add last, stir 2 min</span></td>
+                        <td><span class="temp">500W · 2 min · Add last</span></td>
+                        <td>Sulforaphane (liver support). Vit C, K, calcium. Always add broccoli last in pan-fry — high heat for short time best preserves its nutrients.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sweet Potato (boiled side)</strong></td><td>100g</td><td>86</td>
+                        <td><span class="cook">Boil separately</span></td>
+                        <td><span class="temp">800W · 12 min · Boil</span></td>
+                        <td>Complex carb — post-gym glycogen replenishment (muscles absorb it well in post-workout window). Beta-carotene → Vit A (skin + eye). Potassium (prevents muscle cramps). Fibre.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Egg (boiled side)</strong></td><td>1 whole · 50g</td><td>65</td>
+                        <td><span class="cook">Hard boil</span></td>
+                        <td><span class="temp">800W · 12 min · Boil</span></td>
+                        <td>Choline (brain function, memory consolidation during sleep). Lutein + zeaxanthin in yolk (eye health — specifically helps with -1.0 myopia management). Vit D, complete protein, selenium.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Curd (cold side)</strong></td><td>80g</td><td>62</td>
+                        <td><span class="cook">Raw, cold side</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>Probiotics (gut recovery post-gym). Casein protein (slow-digesting → prevents muscle breakdown overnight — critical for gains). Calcium, B12. Cools spice from chilli marinade.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Marinade</strong></td><td>Salt, ½ tsp chilli, ¼ tsp turmeric, 1 tbsp ginger-garlic paste, ½ lemon</td><td>~15</td>
+                        <td><span class="cook">Marinate 30 min+</span></td>
+                        <td><span class="temp">No heat for marinating</span></td>
+                        <td>Turmeric (curcumin → anti-inflammatory, reduces DOMS, joint health). Ginger (anti-inflammatory, digestion, muscle recovery). Garlic (allicin → heart, immunity). Lemon (Vit C, tenderises chicken for juicy chunks).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Coconut Oil (for pan)</strong></td><td>1 tsp · 5ml</td><td>44</td>
+                        <td><span class="cook">Coat pan</span></td>
+                        <td><span class="temp">300W heat oil first</span></td>
+                        <td>MCTs (medium-chain fats → quick energy, thermogenic). Stable at high heat — does not oxidise like other oils. Lauric acid (antibacterial, antiviral). Supports testosterone production.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pumpkin Seeds (on plated food)</strong></td><td>10g</td><td>55</td>
+                        <td><span class="cook">Raw, sprinkle after plating</span></td>
+                        <td><span class="temp">No heat · Raw</span></td>
+                        <td>Zinc (testosterone, skin, hair). Tryptophan → serotonin → melatonin (helps you fall asleep at 10:30 PM — pumpkin seeds at dinner is strategic). Mg (muscle relaxation, recovery).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Flax Seeds ground (on plated food)</strong></td><td>8g</td><td>44</td>
+                        <td><span class="cook">Raw ground, sprinkle</span></td>
+                        <td><span class="temp">No heat · Raw ground</span></td>
+                        <td>ALA omega-3 (reduces post-gym inflammation overnight). Lignans (hormone balance). Fibre (overnight gut motility). Must be ground — sprinkle on food after plating.</td>
+                    </tr>
+                    <tr class="total-row"><td colspan="2"><strong>TOTAL MEAL 2</strong></td><td><strong>655</strong></td><td colspan="3">~41% of daily 1,600 kcal</td></tr>
+                </table>
+            </div>
+            <div class="note">Total: Meal 1 (725) + Meal 2 (655) + Pre-gym snack banana (89) + Green tea (0) = ~1,469 kcal. Slightly under 1,600 which is perfect for fat loss.</div>
+        </div>
+    </div>
+
+    <!-- ═══ GROCERY ═══ -->
+    <div id="sec_grocery" class="section">
+        <div class="info-o">Weekly items (onions, dry goods, eggs, paneer, curd) stay fresh 7 days. 3-day items (fresh chicken, capsicum, leafy veggies, tomato, broccoli) spoil faster — buy every 3 days. Lemons, coriander, banana buy every 2–3 days.</div>
+
+        <div class="card">
+            <div class="card-title">Grocery Date Range <span class="flash" id="fl_groc">✓ Saved</span></div>
+            <div class="trk-ctrl">
+                <label>From <input type="date" id="gr_s" value="2025-04-27"></label>
+                <label>To <input type="date" id="gr_e" value="2025-05-27"></label>
+                <button class="btn btn-o" onclick="buildGrocery()">Generate</button>
+                <button class="btn btn-w" onclick="if(confirm('Clear all grocery data?')){ls_clear('groc');buildGrocery()}">Clear All</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📦 Weekly Restocking (every 7 days)</div>
+            <div class="tracker-outer" id="groc_weekly"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🥬 3-Day Restocking (every 3 days — fresh items)</div>
+            <div class="tracker-outer" id="groc_3day"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🍋 Every 2–3 Days (very fresh items)</div>
+            <div class="tracker-outer" id="groc_2day"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">➕ Add Custom Grocery</div>
+            <div class="form-grid-3">
+                <div class="form-group"><label>Item Name</label><input class="fi" id="cg_name" placeholder="e.g. Mango"></div>
+                <div class="form-group"><label>Quantity</label><input class="fi" id="cg_qty" placeholder="e.g. 4 pieces"></div>
+                <div class="form-group"><label>Restock Every</label>
+                    <select class="fs" id="cg_freq">
+                        <option value="weekly">Weekly (7 days)</option>
+                        <option value="3day">3 Days</option>
+                        <option value="2day">2 Days</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-o btn-sm" onclick="addCustomGrocery()">Add to List</button>
+            <div id="custom_groc_list" style="margin-top:10px"></div>
+        </div>
+    </div>
+
+    <!-- ═══ TASKS ═══ -->
+    <div id="sec_tasks" class="section">
+        <div class="card">
+            <div class="card-title">Add New Task</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Task Name</label><input class="fi" id="t_name" placeholder="e.g. Apply for passport"></div>
+                <div class="form-group"><label>Category</label>
+                    <select class="fs" id="t_cat" onchange="handleOther(this,'t_cat_other')">
+                        <option>Personal</option><option>Work</option><option>Health</option><option>Finance</option><option>Travel</option><option>Learning</option><option>Social</option><option value="Other">Other…</option>
+                    </select>
+                    <input class="fi" id="t_cat_other" placeholder="Specify category…" style="display:none;margin-top:6px">
+                </div>
+                <div class="form-group"><label>Target Date</label><input type="date" class="fi" id="t_date"></div>
+                <div class="form-group"><label>Priority</label>
+                    <select class="fs" id="t_pri">
+                        <option value="High">🔴 High</option><option value="Medium" selected>🟡 Medium</option><option value="Low">🟢 Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px"><label>Notes / Details</label><textarea class="ft" id="t_notes" placeholder="Any details, sub-tasks, links..."></textarea></div>
+            <button class="btn btn-o" onclick="addTask()">+ Add Task</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Active Tasks</div>
+            <div class="table-wrap" id="tasks_active_wrap">
+                <table id="tasks_active_tbl">
+                    <tr><th>Task</th><th>Category</th><th>Priority</th><th>Target Date</th><th>Days Left</th><th>Status</th><th>Notes</th><th>Actions</th></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" id="tasks_done_card" style="display:none">
+            <div class="card-title">✅ Completed Tasks</div>
+            <div class="table-wrap">
+                <table id="tasks_done_tbl">
+                    <tr><th>Task</th><th>Category</th><th>Completed</th><th>Where / Outcome</th><th>How I Felt</th></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ EXPENSES ═══ -->
+    <div id="sec_expenses" class="section">
+        <div class="card">
+            <div class="card-title">📅 Daily Spending Limit</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Set a variable spending limit per month. Fixed expenses (rent, EMI) are excluded from score calculation.</div>
+            <div id="limit_list" style="margin-bottom:10px"></div>
+            <div class="form-grid" id="lim_form_row" style="margin-bottom:8px">
+                <div class="form-group">
+                    <label>Month</label>
+                    <button class="fi" id="lim_month_btn" onclick="openPicker()" style="text-align:left;cursor:pointer;color:var(--text3)">Tap to select month…</button>
+                    <input type="hidden" id="lim_month">
+                </div>
+                <div class="form-group"><label>Daily Variable Limit (₹)</label><input type="number" class="fi" id="lim_amt" placeholder="e.g. 500"></div>
+            </div>
+            <button class="btn btn-g btn-sm" onclick="saveLimit()">Save Limit</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Add Expense</div>
+            <div class="form-grid-3">
+                <div class="form-group"><label>Date</label><input type="date" class="fi" id="ex_date"></div>
+                <div class="form-group"><label>Spent On</label><input class="fi" id="ex_desc" placeholder="e.g. Groceries, Petrol, Dinner out"></div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" class="fi" id="ex_amt" placeholder="e.g. 250"></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Category</label>
+                    <select class="fs" id="ex_type">
+                        <option value="Need">Need (food, medicine)</option>
+                        <option value="Want">Want (dining out, clothes)</option>
+                        <option value="Desire">Desire (gadgets, luxuries)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Expense Type</label>
+                    <select class="fs" id="ex_vartype">
+                        <option value="Variable">Variable (groceries, eating out…)</option>
+                        <option value="Fixed">Fixed (rent, EMI, subscriptions)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px"><label>Notes (optional)</label><input class="fi" id="ex_notes" placeholder="Any extra detail"></div>
+            <button class="btn btn-o" onclick="addExpense()">+ Add Expense</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">All Transactions</div>
+            <div class="table-wrap" id="exp_t1_wrap">
+                <table id="exp_t1">
+                    <tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Category</th><th>Type</th><th>Notes</th><th>Del</th></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Daily Summary</span></div>
+            <div class="table-wrap">
+                <table id="exp_t2">
+                    <tr><th>Date</th><th>Needs ₹</th><th>Wants ₹</th><th>Desires ₹</th><th>Total ₹</th></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Monthly Summary</span></div>
+            <div class="table-wrap">
+                <table id="exp_t3">
+                    <tr><th>Month</th><th>Needs ₹</th><th>Wants ₹</th><th>Desires ₹</th><th>Total ₹</th></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ DAILY FORGE (HABITS) ═══ -->
+    <div id="sec_habits" class="section">
+        <div class="card">
+            <div class="card-title">🔥 Add New Habit</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Habit Name</label><input class="fi" id="hb_name" placeholder="e.g. Meditation"></div>
+                <div class="form-group"><label>Category</label>
+                    <select class="fs" id="hb_cat">
+                        <option>Mindfulness</option><option>Fitness</option><option>Learning</option><option>Health</option><option>Social</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Daily Time</label><input class="fi" id="hb_time" placeholder="e.g. 6:30 AM, 10 min"></div>
+                <div class="form-group"><label>Goal (days to build)</label><input type="number" class="fi" id="hb_goal" placeholder="e.g. 21"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px"><label>Why this habit?</label><input class="fi" id="hb_why" placeholder="Your motivation..."></div>
+            <button class="btn btn-o" onclick="addHabit()">+ Add Habit</button>
+        </div>
+        <div class="card" id="habits_active_card">
+            <div class="card-title">⚡ Active Habits</div>
+            <div id="habits_list"></div>
+        </div>
+        <div class="card" id="habits_done_card" style="display:none">
+            <div class="card-title">🏅 Habituated — Locked In</div>
+            <div id="habits_done_list"></div>
+        </div>
+    </div>
+
+    <!-- ═══ WISH & BUY ═══ -->
+    <div id="sec_shopping" class="section">
+        <div class="card">
+            <div class="card-title">🛍️ Add to Wish List</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Item</label><input class="fi" id="sh_item" placeholder="e.g. Sky blue T-shirt"></div>
+                <div class="form-group"><label>For Whom</label>
+                    <input class="fi" id="sh_for" placeholder="e.g. Myself, Mummy, Friend…">
+                </div>
+                <div class="form-group"><label>Priority</label>
+                    <select class="fs" id="sh_pri">
+                        <option value="High">🔴 High</option><option value="Medium" selected>🟡 Medium</option><option value="Low">🟢 Low</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Budget (₹)</label><input type="number" class="fi" id="sh_budget" placeholder="e.g. 800"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px"><label>Notes</label><input class="fi" id="sh_notes" placeholder="Size, colour, brand..."></div>
+            <button class="btn btn-o" onclick="addShopItem()">+ Add to Wish List</button>
+        </div>
+        <div class="card">
+            <div class="shop-sum" id="sh_summary"></div>
+            <div class="card-title">🎯 Wish List — To Buy</div>
+            <div class="table-wrap"><table id="sh_tobuy_tbl"><tr><th>Item</th><th>For</th><th>Priority</th><th>Budget ₹</th><th>Notes</th><th>Actions</th></tr></table></div>
+        </div>
+        <div class="card" id="sh_bought_card" style="display:none">
+            <div class="card-title">✅ Purchased — Memory Lane</div>
+            <div class="table-wrap"><table id="sh_bought_tbl"><tr><th>Item</th><th>For</th><th>Bought On</th><th>Budget ₹</th><th>Spent ₹</th><th>Feeling</th></tr></table></div>
+        </div>
+    </div>
+
+</div><!-- end .content -->
+
+<!-- APP PROMPT MODAL (replaces native appPrompt()) -->
+<div class="aprompt-overlay" id="aprompt_overlay">
+  <div class="aprompt-sheet">
+    <div class="aprompt-title" id="aprompt_title"></div>
+    <div class="aprompt-sub" id="aprompt_sub"></div>
+    <input class="aprompt-input" id="aprompt_input" type="text" placeholder="">
+    <div class="aprompt-btn-row">
+      <button class="btn btn-w" style="flex:1" onclick="apromptCancel()">Cancel</button>
+      <button class="btn btn-o" style="flex:2" onclick="apromptConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK REMINDER MODAL -->
+<div class="modal-overlay" id="task_notif_modal" onclick="if(event.target===this)closeNotifModal()">
+    <div class="modal-sheet">
+        <div class="modal-title" id="tnm_title">Set Reminder</div>
+        <div class="modal-sub">Choose how often to be reminded about this task</div>
+        <div class="modal-options">
+            <button class="modal-opt" onclick="selectNotifOpt('2h',this)">⏱ Every 2 hrs</button>
+            <button class="modal-opt" onclick="selectNotifOpt('4h',this)">⏱ Every 4 hrs</button>
+            <button class="modal-opt" onclick="selectNotifOpt('8h',this)">⏱ Every 8 hrs</button>
+            <button class="modal-opt" onclick="selectNotifOpt('off',this)">🔕 Cancel reminder</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-align:center">— or pick a specific time —</div>
+        <div class="modal-dt-row">
+            <input type="date" class="fi" id="tnm_date" style="flex:1">
+            <input type="time" class="fi" id="tnm_time" style="flex:1">
+        </div>
+        <button class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="confirmNotifModal()">Set Reminder</button>
+        <button class="modal-cancel" onclick="closeNotifModal()">Cancel</button>
+    </div>
+</div>
+
+<!-- MONTH PICKER MODAL -->
+<div class="mpicker-overlay" id="mpicker" onclick="if(event.target===this)closePicker()">
+    <div class="mpicker-sheet">
+        <div class="mpicker-title">Select Month</div>
+        <div class="mpicker-year">
+            <button onclick="changePickerYear(-1)">‹</button>
+            <span id="picker_year">2025</span>
+            <button onclick="changePickerYear(1)">›</button>
+        </div>
+        <div class="mpicker-months" id="picker_months"></div>
+        <button class="mpicker-cancel" onclick="closePicker()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    // ═══════════════════════════════════════
+    // TAB SWITCHING — works on iOS Safari
+    // ═══════════════════════════════════════
+    function showTab(name) {
+      var sections = document.querySelectorAll('.section');
+      for (var i = 0; i < sections.length; i++) sections[i].style.display = 'none';
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+      var sec = document.getElementById('sec_' + name);
+      if (sec) sec.style.display = 'block';
+      var tab = document.getElementById('tab_' + name);
+      if (tab) tab.classList.add('active');
+      if (name === 'overview') { renderScores(); updateOverviewMetrics(); }
+    }
+
+    // ═══════════════════════════════════════
+    // LOCAL STORAGE HELPERS
+    // ═══════════════════════════════════════
+    // ═══ FIREBASE CONFIG — paste your own values here ═══
+    var FB_CONFIG = {
+      apiKey: "AIzaSyCh1p2h-1Gko63g6rRYiObYtOK-s69a5RI",
+      authDomain: "no-negotiation.firebaseapp.com",
+      databaseURL: "https://no-negotiation-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "no-negotiation",
+      storageBucket: "no-negotiation.firebasestorage.app",
+      messagingSenderId: "1076667466888",
+      appId: "1:1076667466888:web:9277ba548d8ee9ba07cb3d"
+    };
+
+    var _fbApp = null, _fbDb = null, _fbRef = null, _fbReady = false;
+    var _syncTimer = null;
+
+    function initFirebase() {
+      try {
+        if (typeof firebase === 'undefined') return;
+        _fbApp = firebase.initializeApp(FB_CONFIG);
+        _fbDb  = firebase.database();
+        _fbRef = _fbDb.ref('dashboard/data');
+        // Enable offline persistence (works without internet)
+        _fbDb.goOffline(); _fbDb.goOnline();
+        _fbReady = true;
+        // Load from Firebase on start, seed localStorage
+        _fbRef.once('value').then(function(snap) {
+          var data = snap.val();
+          if (data && typeof data === 'object') {
+            Object.keys(data).forEach(function(k) {
+              try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
+            });
+          }
+          initDashboard();
+        }).catch(function() {
+          // Offline — use local cache
+          initDashboard();
+        });
+        // Keep in sync: when Firebase changes (another device), update localStorage and re-render
+        _fbRef.on('value', function(snap) {
+          var data = snap.val();
+          if (!data) return;
+          Object.keys(data).forEach(function(k) {
+            try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
+          });
+        });
+      } catch(e) {
+        initDashboard(); // fallback
+      }
+    }
+
+    var SYNCED_KEYS = ['sched','m1','m2','groc_w','groc_3','groc_2',
+      'tasks_active_list','tasks_done_list','expenses_list','exp_limits',
+      'weight_log','theme','notif_dismissed','custom_groc',
+      'habits_active','habits_done','shop_wishlist','shop_bought','health_targets'];
+
+    function schedulePush() {
+      if (_syncTimer) clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(pushToFirebase, 800);
+    }
+
+    function pushToFirebase() {
+      if (!_fbReady || !_fbRef) return;
+      var out = {};
+      SYNCED_KEYS.forEach(function(k) {
+        var raw = localStorage.getItem(k);
+        if (raw !== null) { try { out[k] = JSON.parse(raw); } catch(e) {} }
+      });
+      _fbRef.set(out).catch(function(){}); // silent fail when offline, Firebase queues it
+    }
+
+    function ls_get(key) {
+      try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : {}; } catch(e) { return {}; }
+    }
+    function ls_set(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+      schedulePush();
+    }
+    function ls_clear(key) {
+      try { localStorage.removeItem(key); } catch(e) {}
+      schedulePush();
+    }
+    function flash(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('on');
+      setTimeout(function(){ el.classList.remove('on'); }, 1500);
+    }
+
+    // ═══════════════════════════════════════
+    // DATE UTILITIES
+    // ═══════════════════════════════════════
+    function getDates(s, e) {
+      var dates = [], cur = new Date(s + 'T00:00:00'), end = new Date(e + 'T00:00:00');
+      while (cur <= end) { dates.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+      return dates;
+    }
+    function fmtD(d) {
+      var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return d.getDate() + ' ' + m[d.getMonth()];
+    }
+    function isoD(d) {
+      return d.toISOString().slice(0,10);
+    }
+    function daysLeft(targetDateStr) {
+      var now = new Date(); now.setHours(0,0,0,0);
+      var tgt = new Date(targetDateStr + 'T00:00:00');
+      return Math.round((tgt - now) / 86400000);
+    }
+
+    // ═══════════════════════════════════════
+    // TRI-STATE: 0=unlogged, 1=done(green), 2=missed(red)
+    // ═══════════════════════════════════════
+    function triStyle(state) {
+      if (state === 1) return 'background:rgba(52,199,89,0.22);box-shadow:0 0 8px rgba(52,199,89,0.55),inset 0 0 6px rgba(52,199,89,0.3);border:1.5px solid rgba(52,199,89,0.6)';
+      if (state === 2) return 'background:rgba(255,59,48,0.22);box-shadow:0 0 8px rgba(255,59,48,0.55),inset 0 0 6px rgba(255,59,48,0.3);border:1.5px solid rgba(255,59,48,0.5)';
+      return 'background:var(--bg3);box-shadow:none;border:1px solid var(--border)';
+    }
+
+    var TODAY_ISO = isoD(new Date());
+    var YEST_ISO  = isoD(new Date(Date.now()-86400000));
+
+    function buildTrackerDates(wrapId, storeName, flashId, dates, rows) {
+      var data = ls_get(storeName);
+      var html = '<table class="trk"><thead><tr>';
+      html += '<th class="s1">Time</th><th class="s2">Task / Item</th>';
+      dates.forEach(function(d) {
+        var ds = isoD(d);
+        var isToday = ds === TODAY_ISO;
+        var isYest  = ds === YEST_ISO;
+        var lbl = isToday ? '<span style="color:var(--accent)">Today</span>' : fmtD(d);
+        html += '<th class="dc">' + lbl + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+      rows.forEach(function(row, ri) {
+        html += '<tr><td class="s1" style="color:var(--accent);font-weight:700;font-size:10px">' + (row.time||row.cat||'') + '</td>';
+        html += '<td class="s2">' + (row.task || ('<strong>'+row.item+'</strong><br><span style="color:var(--text3);font-size:10px">'+row.qty+'</span>')) + '</td>';
+        dates.forEach(function(d) {
+          var ds = isoD(d);
+          var k = storeName + '_' + ri + '_' + ds;
+          var state = data[k] || 0;
+          // Past dates (before yesterday) = read-only
+          var isPast = ds < YEST_ISO;
+          if (isPast) {
+            var roStyle = state===1 ? triStyle(1) : state===2 ? triStyle(2) : 'background:var(--bg3);opacity:0.4;border:0.5px solid var(--border)';
+            html += '<td class="dc"><button class="tri-btn" style="' + roStyle + '" disabled></button></td>';
+          } else {
+            html += '<td class="dc"><button class="tri-btn" style="' + triStyle(state) + '" data-k="' + k + '" data-store="' + storeName + '" data-flash="' + flashId + '" onclick="triClick(this)"></button></td>';
+          }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById(wrapId).innerHTML = html;
+    }
+
+    function build3Day(wrapId, storeName, flashId, rows) {
+      var yesterday = new Date(Date.now()-86400000);
+      var today = new Date();
+      var tomorrow = new Date(Date.now()+86400000);
+      var dates = [yesterday, today, tomorrow];
+      buildTrackerDates(wrapId, storeName, flashId, dates, rows);
+      var lbl = document.getElementById(wrapId.replace('_wrap','_date_label'));
+      if (lbl) lbl.textContent = fmtD(yesterday) + ' – ' + fmtD(tomorrow);
+    }
+
+    function buildTracker(wrapId, storeName, flashId, startId, endId, rows) {
+      var s = document.getElementById(startId).value;
+      var e = document.getElementById(endId).value;
+      if (!s || !e) return;
+      buildTrackerDates(wrapId, storeName, flashId, getDates(s, e), rows);
+    }
+
+    function triClick(btn) {
+      var storeName = btn.getAttribute('data-store');
+      var k = btn.getAttribute('data-k');
+      var flashId = btn.getAttribute('data-flash');
+      var data = ls_get(storeName);
+      var cur = data[k] || 0;
+      var next = (cur + 1) % 3;
+      if (next === 0) { delete data[k]; } else { data[k] = next; }
+      ls_set(storeName, data);
+      btn.style.cssText = triStyle(next);
+      flash(flashId);
+      renderScores();
+    }
+
+    // ═══════════════════════════════════════
+    // SCHEDULE TRACKER
+    // ═══════════════════════════════════════
+    var SCHED_ROWS = [
+      {time:'6:30 AM', task:'Wakeup'},
+      {time:'6:30 AM', task:'Drink 500–800ml water'},
+      {time:'7:00 AM', task:'Morning cardio 30–40 min'},
+      {time:'9:30 AM', task:'Meal 1 prep done + packed'},
+      {time:'10:00 AM', task:'Leave for office'},
+      {time:'1:30 PM', task:'Eat Meal 1 (full salad)'},
+      {time:'3:30 PM', task:'Green tea'},
+      {time:'5:00 PM', task:'Pre-workout snack (banana)'},
+      {time:'5:30 PM', task:'Gym session'},
+      {time:'6:30 PM', task:'Coconut water post-gym'},
+      {time:'8:00 PM', task:'Eat Meal 2'},
+      {time:'10:30 PM', task:'Sleep by 10:30 PM'},
+    ];
+    function buildSched() { build3Day('sched_wrap','sched','fl_sched',SCHED_ROWS); }
+    function buildSchedPast() { buildTracker('sched_past_wrap','sched','fl_sched','sd_s','sd_e',SCHED_ROWS); }
+
+
+    // ═══════════════════════════════════════
+    // MEAL 1 TRACKER
+    // ═══════════════════════════════════════
+    var M1_ROWS = [
+      {time:'Meal 1', task:'Carrot 80g — steamed'},
+      {time:'Meal 1', task:'Beetroot 60g — boiled'},
+      {time:'Meal 1', task:'Broccoli 80g — steamed'},
+      {time:'Meal 1', task:'Whole Green Beans 80g — steamed'},
+      {time:'Meal 1', task:'Capsicum 50g — steamed'},
+      {time:'Meal 1', task:'Tomato 80g — raw'},
+      {time:'Meal 1', task:'Onion 40g — raw'},
+      {time:'Meal 1', task:'Almonds 10 pcs — soaked peeled'},
+      {time:'Meal 1', task:'Walnuts 4 halves — soaked'},
+      {time:'Meal 1', task:'Chia seeds 10g — raw'},
+      {time:'Meal 1', task:'Pumpkin seeds 15g — raw'},
+      {time:'Meal 1', task:'Flax seeds 10g — ground'},
+      {time:'Meal 1', task:'Sunflower seeds 10g — raw'},
+      {time:'Dressing', task:'Paneer 40g + Curd 30g + Garlic + Chilli + Coriander + Lemon'},
+    ];
+    function buildM1() { build3Day('m1_wrap','m1','fl_m1',M1_ROWS); }
+    function buildM1Past() { buildTracker('m1_past_wrap','m1','fl_m1','m1_s','m1_e',M1_ROWS); }
+
+
+    // ═══════════════════════════════════════
+    // MEAL 2 TRACKER
+    // ═══════════════════════════════════════
+    var M2_ROWS = [
+      {time:'Meal 2', task:'Chicken breast 180g chunks — pan-fried'},
+      {time:'Meal 2', task:'Whole Green Beans 60g — pan-fried'},
+      {time:'Meal 2', task:'Capsicum 60g — pan-fried'},
+      {time:'Meal 2', task:'Onion 50g — pan-fried'},
+      {time:'Meal 2', task:'Broccoli 80g — added last'},
+      {time:'Meal 2', task:'Sweet potato 100g — boiled'},
+      {time:'Meal 2', task:'Egg 1 whole — hard boiled'},
+      {time:'Meal 2', task:'Curd 80g — raw cold side'},
+      {time:'Meal 2', task:'Pumpkin seeds 10g — raw sprinkle'},
+      {time:'Meal 2', task:'Flax seeds 8g ground — sprinkle'},
+      {time:'Marinade', task:'Turmeric + Ginger-garlic + Chilli + Lemon'},
+    ];
+    function buildM2() { build3Day('m2_wrap','m2','fl_m2',M2_ROWS); }
+    function buildM2Past() { buildTracker('m2_past_wrap','m2','fl_m2','m2_s','m2_e',M2_ROWS); }
+
+
+    // ═══════════════════════════════════════
+    // GROCERY TRACKER
+    // ═══════════════════════════════════════
+    var GROC_WEEKLY = [
+      {cat:'Dry Goods', item:'Almonds', qty:'~150g (≈2 weeks worth)'},
+      {cat:'Dry Goods', item:'Walnuts', qty:'~100g'},
+      {cat:'Seeds', item:'Chia seeds', qty:'~100g'},
+      {cat:'Seeds', item:'Pumpkin seeds', qty:'~120g'},
+      {cat:'Seeds', item:'Flax seeds', qty:'~100g (grind as needed)'},
+      {cat:'Seeds', item:'Sunflower seeds', qty:'~80g'},
+      {cat:'Dairy', item:'Paneer', qty:'~300g (or fresh 200g twice)'},
+      {cat:'Dairy', item:'Curd (thick)', qty:'500g pack'},
+      {cat:'Eggs', item:'Eggs', qty:'12 eggs (1 per day)'},
+      {cat:'Veggies', item:'Onions', qty:'500g — last 7+ days'},
+      {cat:'Veggies', item:'Garlic', qty:'1 bulb'},
+      {cat:'Veggies', item:'Ginger', qty:'50g knob'},
+      {cat:'Spices', item:'Coconut oil, turmeric, chilli powder', qty:'Monthly — top up'},
+    ];
+    var GROC_3DAY = [
+      {cat:'Protein', item:'Chicken breast', qty:'~350g (2 days × 180g)'},
+      {cat:'Veggies', item:'Broccoli', qty:'1 medium head ~300g'},
+      {cat:'Veggies', item:'Capsicum (green + red)', qty:'3–4 pieces'},
+      {cat:'Veggies', item:'Beetroot', qty:'2 medium'},
+      {cat:'Veggies', item:'Carrot', qty:'4–5 medium'},
+      {cat:'Veggies', item:'Whole green beans', qty:'250g'},
+      {cat:'Veggies', item:'Tomato', qty:'4–5 medium'},
+      {cat:'Veggies', item:'Cucumber (if added)', qty:'2–3'},
+      {cat:'Veggies', item:'Sweet potato', qty:'3 medium (~300g)'},
+    ];
+    var GROC_2DAY = [
+      {cat:'Fresh', item:'Coriander bunch', qty:'1 bunch'},
+      {cat:'Fresh', item:'Green chilli', qty:'6–8 pieces'},
+      {cat:'Fresh', item:'Lemon', qty:'4–5'},
+      {cat:'Fresh', item:'Banana', qty:'4–5 (for pre-gym)'},
+      {cat:'Fresh', item:'Curry leaves (if using)', qty:'1 sprig'},
+    ];
+
+    function buildGroceryTable(wrapId, items, storeName, intervalDays) {
+      var s = document.getElementById('gr_s').value;
+      var e = document.getElementById('gr_e').value;
+      if (!s || !e) return;
+      var allDates = getDates(s, e);
+      // Pick dates at interval
+      var dates = [];
+      allDates.forEach(function(d, i) { if (i % intervalDays === 0) dates.push(d); });
+      var data = ls_get(storeName);
+      var html = '<table class="trk"><thead><tr>';
+      html += '<th class="s1" style="min-width:60px">Category</th>';
+      html += '<th class="s2">Item + Qty to Buy</th>';
+      dates.forEach(function(d) { html += '<th class="dc">' + fmtD(d) + '</th>'; });
+      html += '</tr></thead><tbody>';
+      items.forEach(function(row, ri) {
+        html += '<tr>';
+        html += '<td class="s1" style="color:#ff6b00;font-size:10px;font-weight:700">' + row.cat + '</td>';
+        html += '<td class="s2"><strong>' + row.item + '</strong><br><span style="color:#555;font-size:10px">' + row.qty + '</span></td>';
+        dates.forEach(function(d) {
+          var k = storeName + '_' + ri + '_' + isoD(d);
+          var state = data[k] || 0;
+          html += '<td class="dc"><button class="tri-btn" style="' + triStyle(state) + '" data-k="' + k + '" data-store="' + storeName + '" data-flash="fl_groc" onclick="triClick(this)"></button></td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById(wrapId).innerHTML = html;
+    }
+
+    function buildGrocery() {
+      var s = document.getElementById('gr_s').value;
+      var e = document.getElementById('gr_e').value;
+      if (!s || !e) {
+        // default: today + 30 days
+        var ts = isoD(new Date());
+        var te = isoD(new Date(Date.now()+30*86400000));
+        document.getElementById('gr_s').value = ts;
+        document.getElementById('gr_e').value = te;
+      }
+      buildGroceryTable('groc_weekly', GROC_WEEKLY, 'groc_w', 7);
+      buildGroceryTable('groc_3day', GROC_3DAY, 'groc_3', 3);
+      buildGroceryTable('groc_2day', GROC_2DAY, 'groc_2', 2);
+    }
+
+    // ═══════════════════════════════════════
+    // TASKS
+    // ═══════════════════════════════════════
+    function getTasks() { return ls_get('tasks_active_list'); }
+    function getDoneTasks() { return ls_get('tasks_done_list'); }
+
+    function addTask() {
+      var name = document.getElementById('t_name').value.trim();
+      var cat = getSelectVal('t_cat', 't_cat_other');
+      var date = document.getElementById('t_date').value;
+      var pri = document.getElementById('t_pri').value;
+      var notes = document.getElementById('t_notes').value.trim();
+      if (!name) { alert('Please enter a task name.'); return; }
+      var tasks = getTasks();
+      var id = Date.now().toString();
+      tasks[id] = {id:id, name:name, cat:cat, date:date, pri:pri, notes:notes, status:'Todo'};
+      ls_set('tasks_active_list', tasks);
+      document.getElementById('t_name').value = '';
+      document.getElementById('t_date').value = '';
+      document.getElementById('t_notes').value = '';
+      renderTasks();
+    }
+
+    function changeStatus(id) {
+      var tasks = getTasks();
+      if (!tasks[id]) return;
+      var statuses = ['Todo','In Progress','Blocked'];
+      var cur = tasks[id].status || 'Todo';
+      var idx = statuses.indexOf(cur);
+      tasks[id].status = statuses[(idx + 1) % statuses.length];
+      ls_set('tasks_active_list', tasks);
+      renderTasks();
+    }
+
+    function completeTask(id) {
+      var tasks = getTasks();
+      var done = getDoneTasks();
+      if (!tasks[id]) return;
+      var t = tasks[id];
+      appPrompt('✅ Task completed!', 'Where / what was the outcome for: "' + t.name + '"', '', function(where) {
+        appPrompt('💬 How do you feel?', 'One word or a sentence — e.g. Relieved, Proud, Motivated', '', function(feeling) {
+          var doneId = Date.now().toString();
+          done[doneId] = { name:t.name, cat:t.cat, completedOn:new Date().toISOString().slice(0,10), where:where, feeling:feeling };
+          delete tasks[id];
+          ls_set('tasks_active_list', tasks);
+          ls_set('tasks_done_list', done);
+          renderTasks();
+        });
+      });
+      return; // early return, rest handled in callback
+    }  // close completeTask here — remove original closing below
+
+
+    function deleteTask(id) {
+      if (!confirm('Delete this task?')) return;
+      var tasks = getTasks();
+      delete tasks[id];
+      ls_set('tasks_active_list', tasks);
+      renderTasks();
+    }
+
+    function renderTasks() {
+      var tasks = getTasks();
+      var done = getDoneTasks();
+      var tbl = document.getElementById('tasks_active_tbl');
+      var keys = Object.keys(tasks);
+      keys.sort(function(a,b) {
+        var pa = {High:0,Medium:1,Low:2}[tasks[a].pri] || 1;
+        var pb = {High:0,Medium:1,Low:2}[tasks[b].pri] || 1;
+        return pa - pb;
+      });
+      var html = '<tr><th>Task</th><th>Category</th><th>Priority</th><th>Target Date</th><th>Days Left</th><th>Status</th><th>Notes</th><th>Actions</th></tr>';
+      if (keys.length === 0) {
+        html += '<tr><td colspan="8" style="text-align:center;color:#444;padding:20px">No active tasks — add one above</td></tr>';
+      }
+      keys.forEach(function(id) {
+        var t = tasks[id];
+        var dl = t.date ? daysLeft(t.date) : null;
+        var dlHtml = dl === null ? '<span style="color:#444">—</span>' :
+          dl < 0 ? '<span class="dn">Overdue ' + Math.abs(dl) + 'd</span>' :
+          dl <= 3 ? '<span class="ds">' + dl + ' days</span>' :
+          '<span class="dok">' + dl + ' days</span>';
+        var priCls = {High:'ph',Medium:'pm',Low:'pl'}[t.pri] || 'pm';
+        var stCls = {Todo:'st-todo','In Progress':'st-prog',Blocked:'br'}[t.status] || 'st-todo';
+        html += '<tr>';
+        html += '<td style="color:#e0e0e0;font-weight:600">' + esc(t.name) + '</td>';
+        html += '<td><span class="badge bw">' + esc(t.cat) + '</span></td>';
+        html += '<td class="' + priCls + '">' + t.pri + '</td>';
+        html += '<td style="color:#888">' + (t.date || '—') + '</td>';
+        html += '<td>' + dlHtml + '</td>';
+        html += '<td><span class="' + stCls + '" style="cursor:pointer" onclick="changeStatus(\'' + id + '\')">' + (t.status||'Todo') + ' ↻</span></td>';
+        html += '<td style="color:#555;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis">' + esc(t.notes||'') + '</td>';
+        html += '<td style="white-space:nowrap">';
+        html += '<button class="btn btn-g btn-sm" onclick="completeTask(\'' + id + '\')">✓</button> ';
+        html += '<button class="btn btn-w btn-sm" onclick="showNotifOptions(\'' + id + '\')">🔔</button> ';
+        html += '<button class="btn btn-r btn-sm" onclick="deleteTask(\'' + id + '\')">✕</button>';
+        html += '</td></tr>';
+      });
+      tbl.innerHTML = html;
+
+      // Completed
+      var doneKeys = Object.keys(done);
+      var doneTbl = document.getElementById('tasks_done_tbl');
+      var doneCard = document.getElementById('tasks_done_card');
+      if (doneKeys.length > 0) {
+        doneCard.style.display = 'block';
+        var dhtml = '<tr><th>Task</th><th>Category</th><th>Completed</th><th>Where / Outcome</th><th>How I Felt</th></tr>';
+        doneKeys.sort(function(a,b) { return b.localeCompare(a); });
+        doneKeys.forEach(function(id) {
+          var d = done[id];
+          dhtml += '<tr>';
+          dhtml += '<td style="color:#4ade80;font-weight:600">' + esc(d.name) + '</td>';
+          dhtml += '<td><span class="badge bw">' + esc(d.cat) + '</span></td>';
+          dhtml += '<td style="color:#888">' + (d.completedOn||'') + '</td>';
+          dhtml += '<td style="color:#aaa">' + esc(d.where||'—') + '</td>';
+          dhtml += '<td style="color:#fbbf24">' + esc(d.feeling||'—') + '</td>';
+          dhtml += '</tr>';
+        });
+        doneTbl.innerHTML = dhtml;
+      } else {
+        doneCard.style.display = 'none';
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // EXPENSES
+    // ═══════════════════════════════════════
+    function getExpenses() { return ls_get('expenses_list'); }
+
+    function addExpense() {
+      var date = document.getElementById('ex_date').value;
+      var desc = document.getElementById('ex_desc').value.trim();
+      var amt = parseFloat(document.getElementById('ex_amt').value);
+      var type = document.getElementById('ex_type').value;
+      var vartype = document.getElementById('ex_vartype').value;
+      var notes = document.getElementById('ex_notes').value.trim();
+      if (!date) { alert('Please select a date.'); return; }
+      if (!desc) { alert('Please enter what you spent on.'); return; }
+      if (!amt || amt <= 0) { alert('Please enter a valid amount.'); return; }
+      var expenses = getExpenses();
+      var id = Date.now().toString();
+      expenses[id] = {id:id, date:date, desc:desc, amt:amt, type:type, vartype:vartype, notes:notes};
+      ls_set('expenses_list', expenses);
+      document.getElementById('ex_desc').value = '';
+      document.getElementById('ex_amt').value = '';
+      document.getElementById('ex_notes').value = '';
+      renderExpenses();
+    }
+
+    function deleteExpense(id) {
+      if (!confirm('Delete this expense?')) return;
+      var expenses = getExpenses();
+      delete expenses[id];
+      ls_set('expenses_list', expenses);
+      renderExpenses();
+    }
+
+    function renderExpenses() {
+      var expenses = getExpenses();
+      var keys = Object.keys(expenses).sort(function(a,b) {
+        return expenses[b].date.localeCompare(expenses[a].date);
+      });
+
+      // Table 1
+      var t1 = document.getElementById('exp_t1');
+      var html1 = '<tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Type</th><th>Notes</th><th>Del</th></tr>';
+      if (keys.length === 0) {
+        html1 += '<tr><td colspan="6" style="text-align:center;color:#444;padding:20px">No expenses logged yet</td></tr>';
+      }
+      keys.forEach(function(id) {
+        var e = expenses[id];
+        var tcls = {Need:'t-need',Want:'t-want',Desire:'t-desire'}[e.type] || '';
+        html1 += '<tr>';
+        html1 += '<td style="color:#888">' + e.date + '</td>';
+        html1 += '<td style="color:#e0e0e0">' + esc(e.desc) + '</td>';
+        html1 += '<td class="amt">₹' + Number(e.amt).toLocaleString('en-IN') + '</td>';
+        html1 += '<td class="' + tcls + '">' + e.type + '</td>';
+        html1 += '<td style="color:' + (e.vartype==='Fixed'?'#bf5af2':'#ff9f0a') + ';font-size:11px">' + (e.vartype||'Variable') + '</td>';
+        html1 += '<td style="color:#555;font-size:11px">' + esc(e.notes||'') + '</td>';
+        html1 += '<td><button class="btn btn-r btn-sm" onclick="deleteExpense(\'' + id + '\')">✕</button></td>';
+        html1 += '</tr>';
+      });
+      t1.innerHTML = html1;
+
+      // Table 2 — Daily summary
+      var daily = {};
+      keys.forEach(function(id) {
+        var e = expenses[id];
+        if (!daily[e.date]) daily[e.date] = {Need:0,Want:0,Desire:0};
+        daily[e.date][e.type] = (daily[e.date][e.type]||0) + Number(e.amt);
+      });
+      var t2 = document.getElementById('exp_t2');
+      var ddays = Object.keys(daily).sort(function(a,b) { return b.localeCompare(a); });
+      var html2 = '<tr><th>Date</th><th class="t-need">Needs ₹</th><th class="t-want">Wants ₹</th><th class="t-desire">Desires ₹</th><th>Total ₹</th></tr>';
+      if (ddays.length === 0) html2 += '<tr><td colspan="5" style="text-align:center;color:#444;padding:14px">No data yet</td></tr>';
+      ddays.forEach(function(d) {
+        var row = daily[d];
+        var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
+        html2 += '<tr>';
+        html2 += '<td style="color:#888">' + d + '</td>';
+        html2 += '<td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td>';
+        html2 += '<td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td>';
+        html2 += '<td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td>';
+        html2 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td>';
+        html2 += '</tr>';
+      });
+      t2.innerHTML = html2;
+
+      // Table 3 — Monthly summary
+      var monthly = {};
+      keys.forEach(function(id) {
+        var e = expenses[id];
+        var month = e.date.slice(0,7); // YYYY-MM
+        if (!monthly[month]) monthly[month] = {Need:0,Want:0,Desire:0};
+        monthly[month][e.type] = (monthly[month][e.type]||0) + Number(e.amt);
+      });
+      var t3 = document.getElementById('exp_t3');
+      var mkeys = Object.keys(monthly).sort(function(a,b) { return b.localeCompare(a); });
+      var html3 = '<tr><th>Month</th><th class="t-need">Needs ₹</th><th class="t-want">Wants ₹</th><th class="t-desire">Desires ₹</th><th>Total ₹</th></tr>';
+      if (mkeys.length === 0) html3 += '<tr><td colspan="5" style="text-align:center;color:#444;padding:14px">No data yet</td></tr>';
+      mkeys.forEach(function(m) {
+        var row = monthly[m];
+        var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
+        var mLabel = new Date(m + '-01').toLocaleDateString('en-IN', {month:'long',year:'numeric'});
+        html3 += '<tr>';
+        html3 += '<td style="color:#e0e0e0;font-weight:600">' + mLabel + '</td>';
+        html3 += '<td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td>';
+        html3 += '<td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td>';
+        html3 += '<td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td>';
+        html3 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td>';
+        html3 += '</tr>';
+      });
+      t3.innerHTML = html3;
+    }
+
+    // ═══════════════════════════════════════
+    // WEIGHT TRACKER
+    // ═══════════════════════════════════════
+    function addWeight() {
+      var date = document.getElementById('wp_date').value;
+      var wt = parseFloat(document.getElementById('wp_wt').value);
+      var fat = parseFloat(document.getElementById('wp_fat').value);
+      if (!date) { alert('Please select a date.'); return; }
+      if (!wt || wt <= 0) { alert('Please enter weight.'); return; }
+      var fatkg = (!isNaN(fat)) ? parseFloat((wt * fat / 100).toFixed(1)) : null;
+      var data = ls_get('weight_log');
+      var id = Date.now().toString();
+      data[id] = {id:id, date:date, wt:wt, fat:isNaN(fat)?null:fat, fatkg:fatkg};
+      ls_set('weight_log', data);
+      document.getElementById('wp_wt').value = '';
+      document.getElementById('wp_fat').value = '';
+      renderWeight();
+    }
+
+    function deleteWeight(id) {
+      if (!confirm('Delete this entry?')) return;
+      var data = ls_get('weight_log');
+      delete data[id];
+      ls_set('weight_log', data);
+      renderWeight();
+    }
+
+    function updateOverviewMetrics() {
+      var data = ls_get('weight_log');
+      var keys = Object.keys(data).sort(function(a,b){ return data[b].date.localeCompare(data[a].date); });
+      var wtEl = document.getElementById('ov_wt');
+      var wtSub = document.getElementById('ov_wt_sub');
+      var fatEl = document.getElementById('ov_fat');
+      var fatSub = document.getElementById('ov_fat_sub');
+      if (keys.length > 0) {
+        var latest = data[keys[0]];
+        if (wtEl) wtEl.textContent = latest.wt + ' kg';
+        if (wtSub) wtSub.textContent = 'Logged ' + latest.date;
+        if (fatEl) fatEl.textContent = latest.fat !== null ? latest.fat + '%' : '—';
+        if (fatSub) fatSub.textContent = latest.fat !== null ? 'Logged ' + latest.date : 'Not recorded';
+      } else {
+        if (wtEl) wtEl.textContent = '—';
+        if (wtSub) wtSub.textContent = 'Not logged yet';
+        if (fatEl) fatEl.textContent = '—';
+        if (fatSub) fatSub.textContent = 'Not logged yet';
+      }
+      // Load targets
+      var tgt = ls_get('health_targets');
+      var wtTgt = document.getElementById('ov_wt_tgt');
+      var fatTgt = document.getElementById('ov_fat_tgt');
+      if (wtTgt) wtTgt.textContent = (tgt.wt || '64 kg') + ' ✏️';
+      if (fatTgt) fatTgt.textContent = (tgt.fat || '10–12%') + ' ✏️';
+    }
+
+    function editTarget(type) {
+      var tgt = ls_get('health_targets');
+      var cur = type === 'wt' ? (tgt.wt || '64 kg') : (tgt.fat || '10–12%');
+      var lbl = type === 'wt' ? 'Target weight (e.g. 64 kg):' : 'Target body fat (e.g. 12%):';
+      var val = prompt(lbl, cur);
+      if (!val) return;
+      tgt[type] = val.trim();
+      ls_set('health_targets', tgt);
+      updateOverviewMetrics();
+    }
+
+    function renderWeight() {
+      var data = ls_get('weight_log');
+      var keys = Object.keys(data).sort(function(a,b){
+        return data[b].date.localeCompare(data[a].date);
+      });
+      var tbl = document.getElementById('wp_table');
+      if (!tbl) return;
+      var html = '<tr><th>Date</th><th>Weight (kg)</th><th>Change</th><th>Fat %</th><th>Fat (kg)</th><th>Del</th></tr>';
+      if (keys.length === 0) {
+        html += '<tr><td colspan="6" style="text-align:center;color:#555;padding:16px">No entries yet</td></tr>';
+        tbl.innerHTML = html; return;
+      }
+      // sort ascending for change calc
+      var asc = keys.slice().reverse();
+      keys.forEach(function(id, idx) {
+        var e = data[id];
+        // find previous entry in ascending order
+        var ascIdx = asc.indexOf(id);
+        var prevKey = ascIdx > 0 ? asc[ascIdx-1] : null;
+        var change = '';
+        if (prevKey) {
+          var diff = parseFloat((e.wt - data[prevKey].wt).toFixed(1));
+          var cls = diff < 0 ? 'color:#4ade80' : diff > 0 ? 'color:#f87171' : 'color:#888';
+          var sign = diff > 0 ? '+' : '';
+          change = '<span style="' + cls + ';font-weight:700">' + sign + diff + ' kg</span>';
+        } else {
+          change = '<span style="color:#555">—</span>';
+        }
+        html += '<tr>';
+        html += '<td style="color:#d4d8e2">' + e.date + '</td>';
+        html += '<td style="color:#60a5fa;font-weight:700;font-size:14px">' + e.wt + ' kg</td>';
+        html += '<td>' + change + '</td>';
+        html += '<td style="color:#fbbf24">' + (e.fat !== null ? e.fat + '%' : '—') + '</td>';
+        html += '<td style="color:#f472b6">' + (e.fatkg !== null ? e.fatkg + ' kg' : '—') + '</td>';
+        html += '<td><button class="btn btn-r btn-sm" onclick="deleteWeight(\'' + id + '\')">✕</button></td>';
+        html += '</tr>';
+      });
+      tbl.innerHTML = html;
+      updateOverviewMetrics();
+    }
+
+    // Auto-calc fat kg when fat% is entered
+    document.addEventListener('DOMContentLoaded', function() {
+      function calcFatKg() {
+        var wt = parseFloat(document.getElementById('wp_wt').value);
+        var fat = parseFloat(document.getElementById('wp_fat').value);
+        var el = document.getElementById('wp_fatkg');
+        if (el && !isNaN(wt) && !isNaN(fat)) {
+          el.value = (wt * fat / 100).toFixed(1);
+        } else if (el) {
+          el.value = '';
+        }
+      }
+      var wtEl = document.getElementById('wp_wt');
+      var fatEl = document.getElementById('wp_fat');
+      if (wtEl) wtEl.addEventListener('input', calcFatKg);
+      if (fatEl) fatEl.addEventListener('input', calcFatKg);
+    });
+
+    // ═══════════════════════════════════════
+    // THEME TOGGLE
+    // ═══════════════════════════════════════
+    function handleOther(sel, inputId) {
+      var inp = document.getElementById(inputId);
+      if (!inp) return;
+      if (sel.value === 'Other') {
+        inp.style.display = 'block';
+        inp.focus();
+      } else {
+        inp.style.display = 'none';
+        inp.value = '';
+      }
+    }
+
+    // Helper: get value from select+other combo
+    function getSelectVal(selId, otherId) {
+      var sel = document.getElementById(selId);
+      if (!sel) return '';
+      if (sel.value === 'Other') {
+        var oth = document.getElementById(otherId);
+        return oth ? (oth.value.trim() || 'Other') : 'Other';
+      }
+      return sel.value;
+    }
+
+    function toggleTheme() {
+      var isLight = document.body.classList.toggle('light');
+      var btn = document.getElementById('theme_btn');
+      if (btn) btn.textContent = isLight ? '🌙 Dark' : '☀️ Light';
+      ls_set('theme', {val: isLight ? 'light' : 'dark'});
+    }
+
+    // ═══════════════════════════════════════
+    // SCORE OF THE DAY
+    // ═══════════════════════════════════════
+    function scoreForTracker(storeName, totalRows, dateStr) {
+      var data = ls_get(storeName);
+      var green = 0, red = 0;
+      for (var i = 0; i < totalRows; i++) {
+        var k = storeName + '_' + i + '_' + dateStr;
+        var v = data[k] || 0;
+        if (v === 1) green++;
+        else if (v === 2) red++;
+      }
+      var total = green + red;
+      if (total === 0) return null;
+      return Math.round((green / (green + red)) * 100);
+    }
+
+    function expenseScoreForDate(dateStr) {
+      var expenses = getExpenses();
+      var month = dateStr.slice(0, 7);
+      var limits = ls_get('exp_limits');
+      var limit = limits[month] ? parseFloat(limits[month]) : null;
+      if (!limit) return null;
+      var total = 0;
+      Object.keys(expenses).forEach(function(id) {
+        var e = expenses[id];
+        if (e.date === dateStr && e.vartype !== 'Fixed') {
+          total += Number(e.amt);
+        }
+      });
+      if (total === 0) return null;
+      var pct = Math.round((total / limit) * 100);
+      return {pct: pct, over: pct > 100};
+    }
+
+    function scoreColor(pct, invert) {
+      // invert=true means higher pct is worse (expenses)
+      if (invert) {
+        if (pct <= 80) return 'rgba(52,199,89,0.9)';
+        if (pct <= 95) return 'rgba(52,199,89,0.55)';
+        if (pct <= 110) return 'rgba(255,59,48,0.6)';
+        if (pct <= 130) return 'rgba(255,59,48,0.78)';
+        return 'rgba(255,59,48,1)';
+      } else {
+        if (pct >= 95) return 'rgba(52,199,89,0.95)';
+        if (pct >= 80) return 'rgba(52,199,89,0.60)';
+        if (pct >= 60) return 'rgba(255,59,48,0.55)';
+        if (pct >= 40) return 'rgba(255,59,48,0.72)';
+        return 'rgba(255,59,48,0.92)';
+      }
+    }
+
+    function makeCircleSVG(pct, label, size, invert) {
+      var r = size === 'lg' ? 44 : size === 'md' ? 36 : 28;
+      var glowId = 'glow_' + label.replace(/\s/g,'') + '_' + size;
+      var vb = (r + 8) * 2;
+      var cx = vb / 2, cy = vb / 2;
+      var circ = 2 * Math.PI * r;
+      var displayPct = pct === null ? '—' : pct + '%';
+      var color = pct === null ? 'rgba(255,255,255,0.15)' : scoreColor(pct, invert);
+      var filled = pct === null ? 0 : Math.min(pct, 100) / 100 * circ;
+      var sw = size === 'lg' ? 9 : size === 'md' ? 7 : 6;
+      var fs = size === 'lg' ? 12 : size === 'md' ? 10 : 8;
+      var lfs = size === 'lg' ? 7 : 6;
+      var ty = cy + fs * 0.35;
+      var ly = cy + fs * 0.35 + lfs + 3;
+      var extraLabel = '';
+      if (invert && pct !== null && pct > 100) {
+        extraLabel = '<tspan x="' + cx + '" dy="' + (lfs+2) + '" font-size="' + (lfs-1) + '" fill="rgba(255,59,48,0.9)">Over limit!</tspan>';
+      }
+      var glowBlur = size === 'lg' ? 7 : size === 'md' ? 5 : 4;
+      var glowSpread = pct !== null ? color : 'none';
+      return '<svg viewBox="0 0 ' + vb + ' ' + vb + '" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">'
+        + '<defs><filter id="' + glowId + '" x="-40%" y="-40%" width="180%" height="180%">'
+        + '<feGaussianBlur in="SourceGraphic" stdDeviation="' + glowBlur + '" result="blur"/>'
+        + '<feComposite in="blur" in2="SourceGraphic" operator="over"/>'
+        + '</filter></defs>'
+        + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--border)" stroke-width="' + sw + '"/>'
+        + (pct !== null && filled > 0
+            ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + (sw-2) + '" stroke-dasharray="' + filled.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round" transform="rotate(-90 ' + cx + ' ' + cy + ')" filter="url(#' + glowId + ')" opacity="0.55"/>'
+            : '')
+        + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + sw + '" stroke-dasharray="' + filled.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round" transform="rotate(-90 ' + cx + ' ' + cy + ')" style="transition:stroke-dasharray .6s ease"/>'
+        + '<text x="' + cx + '" y="' + ty + '" text-anchor="middle" font-size="' + fs + '" font-weight="700" fill="' + (pct===null?'var(--text3)':'var(--text1)') + '" font-family="-apple-system,sans-serif">' + displayPct + '</text>'
+        + '<text x="' + cx + '" y="' + ly + '" text-anchor="middle" font-size="' + lfs + '" fill="var(--text3)" font-family="-apple-system,sans-serif">' + label + extraLabel + '</text>'
+        + '</svg>';
+    }
+
+    function setScoreDate(offsetDays) {
+      var d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      var val = d.toISOString().slice(0,10);
+      var el = document.getElementById('score_date');
+      if (el) { el.value = val; renderScores(); }
+    }
+
+    function renderScores() {
+      var dateInput = document.getElementById('score_date');
+      if (!dateInput) return;
+      var d = dateInput.value;
+      if (!d) return;
+
+      var schedPct = scoreForTracker('sched', SCHED_ROWS.length, d);
+      var m1Pct = scoreForTracker('m1', M1_ROWS.length, d);
+      var m2Pct = scoreForTracker('m2', M2_ROWS.length, d);
+      var expData = expenseScoreForDate(d);
+      var expPct = expData ? expData.pct : null;
+
+      // Overall: each metric worth 25%. Null metrics skipped, remainder redistributed equally.
+      var metrics = [schedPct, m1Pct, m2Pct,
+        expPct === null ? null : (expPct <= 100 ? expPct : Math.max(0, 200 - expPct))
+      ];
+      var defined = metrics.filter(function(v){ return v !== null; });
+      var overall = defined.length > 0
+        ? Math.round(defined.reduce(function(a,b){return a+b},0) / defined.length)
+        : null;
+
+      var row = document.getElementById('score_row');
+      if (!row) return;
+      row.innerHTML =
+        '<div class="score-circle score-sm">' + makeCircleSVG(schedPct, 'SCHED', 'sm', false) + '<div class="s-label">Schedule</div></div>' +
+        '<div class="score-circle score-md">' + makeCircleSVG(expPct, 'SPEND', 'md', true) + '<div class="s-label">Expenses</div></div>' +
+        '<div class="score-circle score-lg">' + makeCircleSVG(overall, 'DAY', 'lg', false) + '<div class="s-label" style="font-size:11px;font-weight:700;color:var(--text2)">Overall</div></div>' +
+        '<div class="score-circle score-md">' + makeCircleSVG(m1Pct, 'MEAL 1', 'md', false) + '<div class="s-label">Meal 1</div></div>' +
+        '<div class="score-circle score-sm">' + makeCircleSVG(m2Pct, 'MEAL 2', 'sm', false) + '<div class="s-label">Meal 2</div></div>';
+    }
+
+    // ═══════════════════════════════════════
+    // EXPENSE LIMIT
+    // ═══════════════════════════════════════
+    function saveLimit() {
+      var month = document.getElementById('lim_month').value.trim();
+      var amt = parseFloat(document.getElementById('lim_amt').value);
+      if (!month || !amt) { alert('Select a month and enter an amount.'); return; }
+      var limits = ls_get('exp_limits');
+      if (limits[month]) { alert('Limit for ' + month + ' is already set and cannot be changed.'); return; }
+      limits[month] = amt;
+      ls_set('exp_limits', limits);
+      var btn = document.getElementById('lim_month_btn');
+      if (btn) { btn.textContent = 'Tap to select month…'; btn.style.color = 'var(--text3)'; }
+      document.getElementById('lim_month').value = '';
+      document.getElementById('lim_amt').value = '';
+      renderLimits();
+      renderScores();
+    }
+
+    function renderLimits() {
+      var limits = ls_get('exp_limits');
+      var curMonth = new Date().toISOString().slice(0,7);
+      var el = document.getElementById('limit_list');
+      if (!el) return;
+      // Show current month notice
+      var notice = '';
+      if (!limits[curMonth]) {
+        notice = '<div style="background:rgba(255,159,10,0.12);border:0.5px solid rgba(255,159,10,0.3);border-radius:10px;padding:10px;font-size:12px;color:var(--yellow);margin-bottom:10px">⚠️ No limit set for <strong>' + curMonth + '</strong>. Set one below so the Expenses score circle works.</div>';
+      } else {
+        notice = '<div style="background:rgba(52,199,89,0.08);border:0.5px solid rgba(52,199,89,0.25);border-radius:10px;padding:10px;font-size:12px;color:var(--green);margin-bottom:10px">✅ <strong>' + curMonth + '</strong> limit: ₹' + Number(limits[curMonth]).toLocaleString('en-IN') + '/day (locked)</div>';
+      }
+      var keys = Object.keys(limits).sort().reverse().filter(function(m){ return m !== curMonth; });
+      var html = notice;
+      if (keys.length > 0) {
+        html += '<div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Past months (locked)</div>';
+        keys.forEach(function(m) {
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+          html += '<span style="color:var(--text3);font-size:12px;flex:1">' + m + ' — ₹' + Number(limits[m]).toLocaleString('en-IN') + '/day</span>';
+          html += '<span class="badge bw" style="font-size:10px">Locked</span>';
+          html += '</div>';
+        });
+      }
+      el.innerHTML = html;
+      // Hide the form if current month already set
+      var formRow = document.getElementById('lim_form_row');
+      if (formRow) formRow.style.display = limits[curMonth] ? 'none' : 'grid';
+    }
+
+    // ═══════════════════════════════════════
+    // SHARE SCORE
+    // ═══════════════════════════════════════
+    function shareScore() {
+      var dateInput = document.getElementById('score_date');
+      var d = dateInput ? dateInput.value : '';
+      var row = document.getElementById('score_row');
+      if (!row) return;
+      var circles = row.querySelectorAll('.score-circle');
+      var lines = ['🏆 My Health Score — ' + d];
+      var labels = ['📅 Schedule','💸 Expenses','⭐ Overall','🥗 Meal 1','🍗 Meal 2'];
+      circles.forEach(function(c, i) {
+        var txt = c.querySelector('text');
+        var val = txt ? txt.textContent : '—';
+        lines.push(labels[i] + ': ' + val);
+      });
+      lines.push('\nTracked with Health & Life Dashboard');
+      var text = lines.join('\n');
+      if (navigator.share) {
+        navigator.share({ title: 'My Health Score', text: text }).catch(function(){});
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('Score copied to clipboard!\n\n' + text);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // NOTIFICATIONS (PWA — must be added to Home Screen)
+    // ═══════════════════════════════════════
+    function checkReminder() {
+      var now = new Date();
+      var h = now.getHours(), m = now.getMinutes();
+      // Show banner between 10:00 AM and 11:00 AM
+      if (h === 10 && m >= 0) {
+        var banner = document.getElementById('notif_banner');
+        if (banner) {
+          var dismissed = ls_get('notif_dismissed');
+          var today = isoD(now);
+          if (!dismissed[today]) {
+            banner.style.display = 'block';
+          }
+        }
+      }
+    }
+
+    // Auto-request notification permission once
+    function initNotifications() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        // Small delay so page fully loads first
+        setTimeout(function() {
+          Notification.requestPermission().then(function(perm) {
+            if (perm === 'granted') scheduleLocalReminder();
+          });
+        }, 2000);
+      } else if (Notification.permission === 'granted') {
+        scheduleLocalReminder();
+      }
+    }
+
+    function scheduleLocalReminder() {
+      if (Notification.permission !== 'granted') return;
+      var now = new Date();
+      var h = now.getHours(), m = now.getMinutes();
+      // Daily 10:30 AM reminder
+      var target = new Date(now);
+      target.setHours(10, 30, 0, 0);
+      if (target <= now) target.setDate(target.getDate() + 1);
+      var ms = target - now;
+      setTimeout(function() {
+        var dismissed = ls_get('notif_dismissed');
+        var today = isoD(new Date());
+        if (!dismissed[today]) {
+          new Notification('⏰ Health Dashboard', {
+            body: "Log yesterday's schedule & expenses now!",
+            tag: 'daily-reminder'
+          });
+          dismissed[today] = 1;
+          ls_set('notif_dismissed', dismissed);
+        }
+        scheduleLocalReminder(); // reschedule for next day
+      }, ms);
+      // Also show banner if it's reminder time right now
+      if (h === 10 && m >= 0 && m < 60) {
+        var dismissed = ls_get('notif_dismissed');
+        if (!dismissed[isoD(now)]) {
+          var banner = document.getElementById('notif_banner');
+          if (banner) banner.style.display = 'block';
+        }
+      }
+    }
+
+    // ═══ TASK NOTIFICATIONS ═══
+    var taskTimers = {};
+
+    var _notifTaskId = null;
+    var _notifChoice = null;
+
+    function showNotifOptions(taskId) {
+      var tasks = getTasks();
+      if (!tasks[taskId]) return;
+      _notifTaskId = taskId;
+      _notifChoice = null;
+      document.getElementById('tnm_title').textContent = '🔔 Remind: ' + tasks[taskId].name;
+      document.querySelectorAll('.modal-opt').forEach(function(b){ b.classList.remove('sel'); });
+      var today = new Date().toISOString().slice(0,10);
+      document.getElementById('tnm_date').value = today;
+      document.getElementById('tnm_time').value = '10:00';
+      document.getElementById('task_notif_modal').classList.add('open');
+    }
+
+    function selectNotifOpt(val, btn) {
+      _notifChoice = val;
+      document.querySelectorAll('.modal-opt').forEach(function(b){ b.classList.remove('sel'); });
+      btn.classList.add('sel');
+    }
+
+    function closeNotifModal() {
+      document.getElementById('task_notif_modal').classList.remove('open');
+      _notifTaskId = null; _notifChoice = null;
+    }
+
+    function confirmNotifModal() {
+      if (!_notifTaskId) return;
+      var tasks = getTasks();
+      var name = tasks[_notifTaskId] ? tasks[_notifTaskId].name : '';
+      var choice = _notifChoice;
+      // If no preset chosen, use date+time
+      if (!choice) {
+        var d = document.getElementById('tnm_date').value;
+        var t = document.getElementById('tnm_time').value;
+        if (d && t) choice = d + ' ' + t;
+      }
+      if (!choice) { alert('Please select a reminder option.'); return; }
+      closeNotifModal();
+      if (choice === 'off') { clearTaskReminder(_notifTaskId); return; }
+      if (Notification.permission !== 'granted') {
+        Notification.requestPermission().then(function(p) {
+          if (p === 'granted') setTaskReminder(_notifTaskId, name, choice);
+          else alert('Allow notifications in Settings → Safari → Notifications.');
+        });
+      } else {
+        setTaskReminder(_notifTaskId, name, choice);
+      }
+    }
+
+    function setTaskReminder(taskId, taskName, choice) {
+      clearTaskReminder(taskId);
+      var intervalMs = 0;
+      if (choice === '2h') intervalMs = 2 * 3600000;
+      else if (choice === '4h') intervalMs = 4 * 3600000;
+      else if (choice === '8h') intervalMs = 8 * 3600000;
+      else {
+        // specific date-time: "YYYY-MM-DD HH:MM"
+        var dt = new Date(choice.replace(' ', 'T'));
+        if (isNaN(dt.getTime())) { alert('Invalid format. Use 2h, 4h, 8h, or "YYYY-MM-DD HH:MM"'); return; }
+        var ms = dt - Date.now();
+        if (ms < 0) { alert('That time is in the past!'); return; }
+        taskTimers[taskId] = setTimeout(function() {
+          var tasks = getTasks();
+          if (tasks[taskId]) {
+            new Notification('📌 Task Reminder', {body: taskName, tag: 'task-' + taskId});
+          }
+        }, ms);
+        alert('✅ Reminder set for ' + dt.toLocaleString('en-IN'));
+        return;
+      }
+      // Repeating interval
+      function fireNotif() {
+        var tasks = getTasks();
+        if (!tasks[taskId]) { clearTaskReminder(taskId); return; } // task completed
+        new Notification('📌 Task Reminder: ' + taskName, {
+          body: 'This task is still pending. Tap to open dashboard.',
+          tag: 'task-' + taskId
+        });
+        taskTimers[taskId] = setTimeout(fireNotif, intervalMs);
+      }
+      taskTimers[taskId] = setTimeout(fireNotif, intervalMs);
+      alert('✅ Repeating reminder every ' + choice + ' set for "' + taskName + '"');
+    }
+
+    function clearTaskReminder(taskId) {
+      if (taskTimers[taskId]) {
+        clearTimeout(taskTimers[taskId]);
+        delete taskTimers[taskId];
+        alert('🔕 Reminder cancelled.');
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // CUSTOM GROCERY ITEMS
+    // ═══════════════════════════════════════
+    function addCustomGrocery() {
+      var name = document.getElementById('cg_name').value.trim();
+      var qty  = document.getElementById('cg_qty').value.trim();
+      var freq = document.getElementById('cg_freq').value;
+      if (!name || !qty) { alert('Enter name and quantity.'); return; }
+      var list = ls_get('custom_groc');
+      var id = Date.now().toString();
+      list[id] = {id:id, name:name, qty:qty, freq:freq};
+      ls_set('custom_groc', list);
+      document.getElementById('cg_name').value = '';
+      document.getElementById('cg_qty').value = '';
+      renderCustomGrocery();
+      buildGrocery();
+    }
+
+    function deleteCustomGrocery(id) {
+      var list = ls_get('custom_groc');
+      delete list[id];
+      ls_set('custom_groc', list);
+      renderCustomGrocery();
+      buildGrocery();
+    }
+
+    function renderCustomGrocery() {
+      var list = ls_get('custom_groc');
+      var keys = Object.keys(list);
+      var el = document.getElementById('custom_groc_list');
+      if (!el) return;
+      if (keys.length === 0) { el.innerHTML = ''; return; }
+      var html = '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Your custom items:</div>';
+      keys.forEach(function(id) {
+        var g = list[id];
+        var freqLbl = {weekly:'Weekly',three:'3 days','3day':'3 days','2day':'2 days'}[g.freq] || g.freq;
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+        html += '<span style="flex:1;color:var(--text1);font-size:13px"><strong>' + esc(g.name) + '</strong> <span style="color:var(--text3);font-size:11px">· ' + esc(g.qty) + ' · ' + freqLbl + '</span></span>';
+        html += '<button class="btn btn-r btn-sm" onclick="deleteCustomGrocery(\'' + id + '\')">✕</button>';
+        html += '</div>';
+      });
+      el.innerHTML = html;
+    }
+
+    // Override buildGrocery to include custom items
+    var _origBuildGrocery = buildGrocery;
+    buildGrocery = function() {
+      var s = document.getElementById('gr_s').value;
+      var e = document.getElementById('gr_e').value;
+      if (!s || !e) {
+        var ts = isoD(new Date()); var te = isoD(new Date(Date.now()+30*86400000));
+        document.getElementById('gr_s').value = ts;
+        document.getElementById('gr_e').value = te;
+      }
+      var custom = ls_get('custom_groc');
+      var extraW = [], extra3 = [], extra2 = [];
+      Object.keys(custom).forEach(function(id) {
+        var g = custom[id];
+        var row = {cat:'Custom', item:g.name, qty:g.qty};
+        if (g.freq === 'weekly') extraW.push(row);
+        else if (g.freq === '3day') extra3.push(row);
+        else extra2.push(row);
+      });
+      buildGroceryTable('groc_weekly', GROC_WEEKLY.concat(extraW), 'groc_w', 7);
+      buildGroceryTable('groc_3day', GROC_3DAY.concat(extra3), 'groc_3', 3);
+      buildGroceryTable('groc_2day', GROC_2DAY.concat(extra2), 'groc_2', 2);
+    };
+
+    // ═══════════════════════════════════════
+    // HABITS (DAILY FORGE)
+    // ═══════════════════════════════════════
+    function getHabits() { return ls_get('habits_active'); }
+    function getDoneHabits() { return ls_get('habits_done'); }
+
+    function addHabit() {
+      var name = document.getElementById('hb_name').value.trim();
+      var cat  = document.getElementById('hb_cat').value;
+      var time = document.getElementById('hb_time').value.trim();
+      var goal = parseInt(document.getElementById('hb_goal').value) || 21;
+      var why  = document.getElementById('hb_why').value.trim();
+      if (!name) { alert('Enter habit name.'); return; }
+      var habits = getHabits();
+      var id = Date.now().toString();
+      habits[id] = {id:id, name:name, cat:cat, time:time, goal:goal, why:why, startDate: isoD(new Date()), log:{}};
+      ls_set('habits_active', habits);
+      document.getElementById('hb_name').value = '';
+      document.getElementById('hb_why').value = '';
+      renderHabits();
+    }
+
+    function logHabitDay(hid, dateStr, val) {
+      var habits = getHabits();
+      if (!habits[hid]) return;
+      habits[hid].log[dateStr] = val; // 1=done, 2=missed
+      ls_set('habits_active', habits);
+      renderHabits();
+    }
+
+    function habitDoneForever(hid) {
+      var habits = getHabits();
+      var done = getDoneHabits();
+      if (!habits[hid]) return;
+      var h = habits[hid];
+      var id = Date.now().toString();
+      done[id] = {name:h.name, cat:h.cat, startDate:h.startDate, doneDate:isoD(new Date()), goal:h.goal};
+      delete habits[hid];
+      ls_set('habits_active', habits);
+      ls_set('habits_done', done);
+      renderHabits();
+    }
+
+    function deleteHabit(hid) {
+      if (!confirm('Delete this habit?')) return;
+      var habits = getHabits();
+      delete habits[hid];
+      ls_set('habits_active', habits);
+      renderHabits();
+    }
+
+    function renderHabits() {
+      var habits = getHabits();
+      var done   = getDoneHabits();
+      var el = document.getElementById('habits_list');
+      if (!el) return;
+      var keys = Object.keys(habits);
+      if (keys.length === 0) { el.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:12px 0">No habits yet — add your first above.</div>'; }
+      else {
+        var html = '';
+        keys.forEach(function(hid) {
+          var h = habits[hid];
+          // Build last 21 day streak dots
+          var streakHtml = '';
+          var today = new Date();
+          var greenCount = 0, total = 0;
+          for (var i = h.goal - 1; i >= 0; i--) {
+            var dd = new Date(today); dd.setDate(dd.getDate() - i);
+            var ds = isoD(dd);
+            var v = h.log[ds] || 0;
+            if (v===1) { greenCount++; total++; streakHtml += '<div class="habit-day done" title="' + ds + '"></div>'; }
+            else if (v===2) { total++; streakHtml += '<div class="habit-day miss" title="' + ds + '"></div>'; }
+            else streakHtml += '<div class="habit-day" title="' + ds + '"></div>';
+          }
+          var pct = total > 0 ? Math.round(greenCount/total*100) : 0;
+          html += '<div style="background:var(--bg3);border:0.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">';
+          html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
+          html += '<div><div style="font-size:14px;font-weight:700;color:var(--text1)">' + esc(h.name) + '</div>';
+          html += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + esc(h.cat) + (h.time?' · '+esc(h.time):'') + ' · Goal: ' + h.goal + ' days · ' + pct + '% success</div>';
+          if (h.why) html += '<div style="font-size:11px;color:var(--teal);margin-top:3px">💬 ' + esc(h.why) + '</div>';
+          html += '</div>';
+          html += '<div style="display:flex;gap:4px">';
+          html += '<button class="btn btn-g btn-sm" onclick="habitDoneForever(\'' + hid + '\')">🏅</button>';
+          html += '<button class="btn btn-r btn-sm" onclick="deleteHabit(\'' + hid + '\')">✕</button>';
+          html += '</div></div>';
+          html += '<div class="habit-streak" style="margin-top:8px">' + streakHtml + '</div>';
+          var tod = isoD(new Date()); var yest = isoD(new Date(Date.now()-86400000));
+          html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">';
+          [tod, yest].forEach(function(ds) {
+            var v = h.log[ds] || 0;
+            html += '<div style="font-size:11px;color:var(--text3)">' + (ds===tod?'Today':'Yest') + ':</div>';
+            html += '<button class="tri-btn" style="' + triStyle(v===1?1:0) + '" onclick="logHabitDay(\'' + hid + '\',\'' + ds + '\',1)">✅</button>';
+            html += '<button class="tri-btn" style="' + triStyle(v===2?2:0) + '" onclick="logHabitDay(\'' + hid + '\',\'' + ds + '\',2)">❌</button>';
+          });
+          html += '</div></div>';
+        });
+        el.innerHTML = html;
+      }
+      // Done habits
+      var doneEl = document.getElementById('habits_done_list');
+      var doneCard = document.getElementById('habits_done_card');
+      var dkeys = Object.keys(done);
+      if (dkeys.length > 0 && doneCard) {
+        doneCard.style.display = 'block';
+        var dhtml = '';
+        dkeys.forEach(function(id) {
+          var d = done[id];
+          dhtml += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
+          dhtml += '<span style="font-size:20px">🏅</span>';
+          dhtml += '<div><div style="font-size:13px;font-weight:700;color:var(--green)">' + esc(d.name) + '</div>';
+          dhtml += '<div style="font-size:11px;color:var(--text3)">' + esc(d.cat) + ' · Started ' + d.startDate + ' · Habituated ' + d.doneDate + '</div></div>';
+          dhtml += '</div>';
+        });
+        if (doneEl) doneEl.innerHTML = dhtml;
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // SHOPPING (WISH & BUY)
+    // ═══════════════════════════════════════
+    function getShopItems() { return ls_get('shop_wishlist'); }
+    function getBoughtItems() { return ls_get('shop_bought'); }
+
+    function addShopItem() {
+      var item   = document.getElementById('sh_item').value.trim();
+      var forWhom= document.getElementById('sh_for').value;
+      var pri    = document.getElementById('sh_pri').value;
+      var budget = parseFloat(document.getElementById('sh_budget').value) || 0;
+      var notes  = document.getElementById('sh_notes').value.trim();
+      if (!item) { alert('Enter item name.'); return; }
+      var list = getShopItems();
+      var id = Date.now().toString();
+      list[id] = {id:id, item:item, forWhom:forWhom, pri:pri, budget:budget, notes:notes};
+      ls_set('shop_wishlist', list);
+      document.getElementById('sh_item').value = '';
+      document.getElementById('sh_budget').value = '';
+      document.getElementById('sh_notes').value = '';
+      renderShopping();
+    }
+
+    function markBought(id) {
+      var list = getShopItems();
+      var bought = getBoughtItems();
+      if (!list[id]) return;
+      var itemName = list[id].item;
+      var budget = list[id].budget || 0;
+      appPrompt('🛍️ Mark as bought: ' + itemName, 'How much did you actually spend? (₹)', String(budget), function(spentStr) {
+        appPrompt('💬 How do you feel about this purchase?', '', 'Happy 😊', function(feeling) {
+          var bid = Date.now().toString();
+          bought[bid] = Object.assign({}, list[id], {boughtOn: isoD(new Date()), spent: parseFloat(spentStr)||0, feeling: feeling});
+          delete list[id];
+          ls_set('shop_wishlist', list);
+          ls_set('shop_bought', bought);
+          renderShopping();
+        });
+      });
+    }
+
+    function deleteShopItem(id) {
+      if (!confirm('Remove from wish list?')) return;
+      var list = getShopItems();
+      delete list[id];
+      ls_set('shop_wishlist', list);
+      renderShopping();
+    }
+
+    function renderShopping() {
+      var list   = getShopItems();
+      var bought = getBoughtItems();
+      var lkeys  = Object.keys(list);
+      var bkeys  = Object.keys(bought);
+
+      // Summary
+      var totalBudget = lkeys.reduce(function(s,id){ return s + (list[id].budget||0); }, 0);
+      var totalSpent  = bkeys.reduce(function(s,id){ return s + (bought[id].spent||0); }, 0);
+      var sumEl = document.getElementById('sh_summary');
+      if (sumEl) sumEl.innerHTML =
+        '<div class="shop-sum-box"><div class="sv" style="color:var(--yellow)">₹' + totalBudget.toLocaleString('en-IN') + '</div><div class="sl">Budget (wish list)</div></div>' +
+        '<div class="shop-sum-box"><div class="sv" style="color:var(--green)">₹' + totalSpent.toLocaleString('en-IN') + '</div><div class="sl">Actually spent</div></div>';
+
+      // To-buy table
+      var priCls = {High:'ph',Medium:'pm',Low:'pl'};
+      var tbl = document.getElementById('sh_tobuy_tbl');
+      var html = '<tr><th>Item</th><th>For</th><th>Priority</th><th>Budget ₹</th><th>Notes</th><th>Actions</th></tr>';
+      if (lkeys.length === 0) html += '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:14px">Nothing on wish list yet</td></tr>';
+      lkeys.sort(function(a,b){ var p={High:0,Medium:1,Low:2}; return (p[list[a].pri]||1)-(p[list[b].pri]||1); });
+      lkeys.forEach(function(id) {
+        var i = list[id];
+        html += '<tr><td style="color:var(--text1);font-weight:600">' + esc(i.item) + '</td>';
+        html += '<td style="color:var(--text2)">' + esc(i.forWhom) + '</td>';
+        html += '<td class="' + (priCls[i.pri]||'pm') + '">' + i.pri + '</td>';
+        html += '<td class="amt">₹' + (i.budget||0).toLocaleString('en-IN') + '</td>';
+        html += '<td style="color:var(--text3);font-size:11px">' + esc(i.notes||'') + '</td>';
+        html += '<td style="white-space:nowrap"><button class="btn btn-g btn-sm" onclick="markBought(\'' + id + '\')">✓ Bought</button> <button class="btn btn-r btn-sm" onclick="deleteShopItem(\'' + id + '\')">✕</button></td>';
+        html += '</tr>';
+      });
+      if (tbl) tbl.innerHTML = html;
+
+      // Bought table
+      var btbl = document.getElementById('sh_bought_tbl');
+      var bcard = document.getElementById('sh_bought_card');
+      if (bkeys.length > 0 && bcard) {
+        bcard.style.display = 'block';
+        var bhtml = '<tr><th>Item</th><th>For</th><th>Bought On</th><th>Budget ₹</th><th>Spent ₹</th><th>Feeling</th></tr>';
+        bkeys.sort(function(a,b){ return b.localeCompare(a); });
+        bkeys.forEach(function(id) {
+          var i = bought[id];
+          var diff = (i.spent||0) - (i.budget||0);
+          var diffHtml = diff > 0 ? '<span style="color:var(--red);font-size:10px">+₹'+diff+'</span>' : diff < 0 ? '<span style="color:var(--green);font-size:10px">-₹'+Math.abs(diff)+'</span>' : '';
+          bhtml += '<tr><td style="color:var(--green);font-weight:600">' + esc(i.item) + '</td>';
+          bhtml += '<td>' + esc(i.forWhom) + '</td>';
+          bhtml += '<td style="color:var(--text3)">' + (i.boughtOn||'') + '</td>';
+          bhtml += '<td style="color:var(--yellow)">₹' + (i.budget||0).toLocaleString('en-IN') + '</td>';
+          bhtml += '<td class="amt">₹' + (i.spent||0).toLocaleString('en-IN') + ' ' + diffHtml + '</td>';
+          bhtml += '<td style="color:var(--teal)">' + esc(i.feeling||'') + '</td>';
+          bhtml += '</tr>';
+        });
+        if (btbl) btbl.innerHTML = bhtml;
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // THEMED PROMPT (replaces native appPrompt())
+    // ═══════════════════════════════════════
+    var _apromptCb = null;
+
+    function appPrompt(title, sub, defaultVal, cb) {
+      _apromptCb = cb;
+      document.getElementById('aprompt_title').textContent = title;
+      document.getElementById('aprompt_sub').textContent = sub || '';
+      var inp = document.getElementById('aprompt_input');
+      inp.value = defaultVal || '';
+      inp.placeholder = defaultVal || '';
+      document.getElementById('aprompt_overlay').classList.add('open');
+      setTimeout(function(){ inp.focus(); }, 300);
+    }
+
+    function apromptConfirm() {
+      var val = document.getElementById('aprompt_input').value.trim();
+      document.getElementById('aprompt_overlay').classList.remove('open');
+      if (_apromptCb) { _apromptCb(val); _apromptCb = null; }
+    }
+
+    function apromptCancel() {
+      document.getElementById('aprompt_overlay').classList.remove('open');
+      _apromptCb = null;
+    }
+
+    // ═══════════════════════════════════════
+    // MONTH PICKER
+    // ═══════════════════════════════════════
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var pickerYear = new Date().getFullYear();
+    var pickerSelectedMonth = null; // 0-indexed
+
+    function openPicker() {
+      pickerYear = new Date().getFullYear();
+      pickerSelectedMonth = null;
+      var cur = document.getElementById('lim_month').value;
+      if (cur && cur.length === 7) {
+        pickerYear = parseInt(cur.slice(0,4));
+        pickerSelectedMonth = parseInt(cur.slice(5,7)) - 1;
+      }
+      renderPickerMonths();
+      document.getElementById('picker_year').textContent = pickerYear;
+      document.getElementById('mpicker').classList.add('open');
+    }
+
+    function closePicker() {
+      document.getElementById('mpicker').classList.remove('open');
+    }
+
+    function changePickerYear(delta) {
+      pickerYear += delta;
+      document.getElementById('picker_year').textContent = pickerYear;
+      renderPickerMonths();
+    }
+
+    function renderPickerMonths() {
+      var html = '';
+      MONTHS.forEach(function(m, i) {
+        var sel = (pickerSelectedMonth === i) ? ' sel' : '';
+        html += '<button class="' + sel + '" onclick="selectPickerMonth(' + i + ')">' + m + '</button>';
+      });
+      document.getElementById('picker_months').innerHTML = html;
+    }
+
+    function selectPickerMonth(idx) {
+      pickerSelectedMonth = idx;
+      var mm = String(idx + 1).padStart(2, '0');
+      var val = pickerYear + '-' + mm;
+      document.getElementById('lim_month').value = val;
+      var btn = document.getElementById('lim_month_btn');
+      if (btn) {
+        btn.textContent = MONTHS[idx] + ' ' + pickerYear;
+        btn.style.color = 'var(--text1)';
+      }
+      renderPickerMonths();
+      closePicker();
+    }
+
+    // Escape HTML
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ═══════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(function(){});
+    }
+
+    window.addEventListener('load', function() {
+      initFirebase(); // handles loading from Firebase then calls initDashboard()
+    });
+
+    // initDashboard is called by initFirebase after data is loaded
+    function initDashboard() {
+      var today = new Date().toISOString().slice(0,10);
+      var yesterday = isoD(new Date(Date.now()-86400000));
+
+      // Restore theme
+      var savedTheme = ls_get('theme');
+      if (savedTheme && savedTheme.val === 'light') {
+        document.body.classList.add('light');
+        var tb = document.getElementById('theme_btn');
+        if (tb) tb.textContent = '☀️ Light';
+      }
+
+      // Set default dates
+      document.getElementById('ex_date').value = today;
+      var wpDate = document.getElementById('wp_date');
+      if (wpDate) wpDate.value = today;
+
+      // Score defaults to YESTERDAY
+      var sd = document.getElementById('score_date');
+      if (sd) sd.value = yesterday;
+
+      // Show overview first
+      showTab('overview');
+
+      // Build trackers (3-day auto view)
+      buildSched();
+      buildM1();
+      buildM2();
+      buildGrocery();
+      renderTasks();
+      renderExpenses();
+      renderWeight();  // also calls updateOverviewMetrics
+      renderLimits();
+      renderScores();
+      renderCustomGrocery();
+      renderHabits();
+      renderShopping();
+
+      // Notifications (auto-request, no button needed)
+      initNotifications();
+    } // end initDashboard
+</script>
+</body>
+</html>
