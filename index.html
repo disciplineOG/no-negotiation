@@ -81,7 +81,7 @@
         .header{
           background:var(--bg2);
           border-bottom:0.5px solid var(--border);
-          padding:14px 14px 0;
+          padding:max(14px, env(safe-area-inset-top)) 14px 0;
           position:sticky;top:0;z-index:200;
           transition:background .35s ease,border-color .35s ease;
         }
@@ -115,7 +115,7 @@
         /* ══════════════════════════════════════
            LAYOUT
         ══════════════════════════════════════ */
-        .content{padding:12px 12px 80px;transition:background .35s}
+        .content{padding:12px 12px max(80px, env(safe-area-inset-bottom, 80px));transition:background .35s}
         .section{display:none}
         #sec_overview{display:block}
 
@@ -374,6 +374,26 @@
         .shop-sum-box{flex:1;min-width:120px;background:var(--bg3);border:0.5px solid var(--border);border-radius:10px;padding:10px;text-align:center}
 
         /* ══════════════════════════════════════
+           AUTH MODAL
+        ══════════════════════════════════════ */
+        .auth-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:24px}
+        .auth-overlay.open{display:flex}
+        .auth-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:28px 22px;width:100%;max-width:340px;text-align:center}
+        .auth-logo{font-size:32px;margin-bottom:10px}
+        .auth-title{font-size:18px;font-weight:800;color:var(--accent);margin-bottom:4px}
+        .auth-sub{font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.6}
+        .auth-input{background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:10px;padding:14px;font-size:16px;font-family:inherit;width:100%;outline:none;margin-bottom:12px;text-align:center;letter-spacing:2px;color-scheme:var(--cs)}
+        .auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+        .auth-err{font-size:12px;color:var(--red);margin-bottom:10px;min-height:18px}
+        .auth-readonly-badge{display:inline-block;background:rgba(90,200,250,0.12);color:var(--teal);border:0.5px solid rgba(90,200,250,0.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;margin-top:8px}
+        /* READ-ONLY MODE: hides all mutation controls */
+        body.readonly .admin-only{display:none !important}
+        body.readonly .fi:not([readonly]){pointer-events:none;opacity:0.6}
+        body.readonly .fs{pointer-events:none;opacity:0.6}
+        body.readonly .ft{pointer-events:none;opacity:0.6}
+        body.readonly .tri-btn{pointer-events:none}
+
+        /* ══════════════════════════════════════
            NOTIFICATION BANNER
         ══════════════════════════════════════ */
         .notif-banner{
@@ -441,7 +461,10 @@
 <div class="header">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div class="header-title">Health & Life Dashboard</div>
-        <button onclick="toggleTheme()" id="theme_btn" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🌙 Dark</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onclick="forceSyncFromFirebase()" id="sync_btn" title="Force sync from server" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🔄</button>
+          <button onclick="toggleTheme()" id="theme_btn" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🌙 Dark</button>
+        </div>
     </div>
     <div class="tabs">
         <button class="tab active" id="tab_overview" onclick="showTab('overview')">Overview</button>
@@ -524,7 +547,7 @@
                 <div class="form-group"><label>Fat %</label><input type="number" class="fi" id="wp_fat" placeholder="25.0" step="0.1"></div>
                 <div class="form-group"><label>Fat (kg)</label><input type="number" class="fi" id="wp_fatkg" placeholder="auto" step="0.1" id="wp_fatkg_disp" readonly style="opacity:.6"></div>
             </div>
-            <button class="btn btn-o" onclick="addWeight()" style="margin-bottom:12px">+ Log Weight</button>
+            <button class="btn btn-o admin-only" onclick="addWeight()" style="margin-bottom:12px">+ Log Weight</button>
             <div class="table-wrap">
                 <table id="wp_table">
                     <tr><th>Date</th><th>Weight (kg)</th><th>Change</th><th>Fat %</th><th>Fat (kg)</th><th>Del</th></tr>
@@ -565,6 +588,16 @@
             </div>
             <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap once = ✅ done &nbsp;|&nbsp; Tap again = ❌ missed &nbsp;|&nbsp; Tap again = reset</div>
             <div class="tracker-outer" id="sched_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">➕ Add Custom Schedule Entry</div>
+            <div class="form-grid">
+              <div class="form-group"><label>Time</label><input class="fi" id="cs_time" placeholder="e.g. 9:00 AM"></div>
+              <div class="form-group"><label>Task / Activity</label><input class="fi" id="cs_task" placeholder="e.g. Meditated for 10 min"></div>
+            </div>
+            <button class="btn btn-o btn-sm admin-only" onclick="addCustomSchedRow()">Add to Tracker</button>
+            <div id="custom_sched_list" style="margin-top:10px"></div>
         </div>
 
         <div class="card">
@@ -930,7 +963,7 @@
                     </select>
                 </div>
             </div>
-            <button class="btn btn-o btn-sm" onclick="addCustomGrocery()">Add to List</button>
+            <button class="btn btn-o btn-sm admin-only" onclick="addCustomGrocery()">Add to List</button>
             <div id="custom_groc_list" style="margin-top:10px"></div>
         </div>
     </div>
@@ -955,7 +988,7 @@
                 </div>
             </div>
             <div class="form-group" style="margin-bottom:10px"><label>Notes / Details</label><textarea class="ft" id="t_notes" placeholder="Any details, sub-tasks, links..."></textarea></div>
-            <button class="btn btn-o" onclick="addTask()">+ Add Task</button>
+            <button class="btn btn-o admin-only" onclick="addTask()">+ Add Task</button>
         </div>
 
         <div class="card">
@@ -980,18 +1013,16 @@
     <!-- ═══ EXPENSES ═══ -->
     <div id="sec_expenses" class="section">
         <div class="card">
-            <div class="card-title">📅 Daily Spending Limit</div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Set a variable spending limit per month. Fixed expenses (rent, EMI) are excluded from score calculation.</div>
+            <div class="card-title">📅 Monthly Spending Limit</div>
             <div id="limit_list" style="margin-bottom:10px"></div>
-            <div class="form-grid" id="lim_form_row" style="margin-bottom:8px">
-                <div class="form-group">
-                    <label>Month</label>
-                    <button class="fi" id="lim_month_btn" onclick="openPicker()" style="text-align:left;cursor:pointer;color:var(--text3)">Tap to select month…</button>
-                    <input type="hidden" id="lim_month">
-                </div>
+            <div id="lim_form_row">
+              <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Setting limit for: <strong id="lim_cur_month_label" style="color:var(--text1)"></strong></div>
+              <div class="form-grid" style="margin-bottom:8px">
                 <div class="form-group"><label>Daily Variable Limit (₹)</label><input type="number" class="fi" id="lim_amt" placeholder="e.g. 500"></div>
+              </div>
+              <button class="btn btn-g btn-sm admin-only" onclick="saveLimit()">Save Limit for This Month</button>
             </div>
-            <button class="btn btn-g btn-sm" onclick="saveLimit()">Save Limit</button>
+            <input type="hidden" id="lim_month">
         </div>
 
         <div class="card">
@@ -1017,7 +1048,7 @@
                 </div>
             </div>
             <div class="form-group" style="margin-bottom:10px"><label>Notes (optional)</label><input class="fi" id="ex_notes" placeholder="Any extra detail"></div>
-            <button class="btn btn-o" onclick="addExpense()">+ Add Expense</button>
+            <button class="btn btn-o admin-only" onclick="addExpense()">+ Add Expense</button>
         </div>
 
         <div class="card">
@@ -1030,10 +1061,10 @@
         </div>
 
         <div class="card">
-            <div class="card-title">Daily Summary</span></div>
+            <div class="card-title">Daily Summary — Last 7 Days</div>
             <div class="table-wrap">
                 <table id="exp_t2">
-                    <tr><th>Date</th><th>Needs ₹</th><th>Wants ₹</th><th>Desires ₹</th><th>Total ₹</th></tr>
+                    <tr><th>Date</th><th>Needs</th><th>Wants</th><th>Desires</th><th>Total</th><th>Var Spent</th><th>vs Limit</th></tr>
                 </table>
             </div>
         </div>
@@ -1045,6 +1076,15 @@
                     <tr><th>Month</th><th>Needs ₹</th><th>Wants ₹</th><th>Desires ₹</th><th>Total ₹</th></tr>
                 </table>
             </div>
+        </div>
+    <div class="card">
+            <div class="card-title">📂 Fetch Historical Expense Data</div>
+            <div class="trk-ctrl">
+                <label>From <input type="date" id="exp_hist_s"></label>
+                <label>To <input type="date" id="exp_hist_e"></label>
+                <button class="btn btn-o btn-sm" onclick="fetchExpenseHistory()">Fetch</button>
+            </div>
+            <div id="exp_hist_result" style="margin-top:8px"></div>
         </div>
     </div>
 
@@ -1063,7 +1103,7 @@
                 <div class="form-group"><label>Goal (days to build)</label><input type="number" class="fi" id="hb_goal" placeholder="e.g. 21"></div>
             </div>
             <div class="form-group" style="margin-bottom:10px"><label>Why this habit?</label><input class="fi" id="hb_why" placeholder="Your motivation..."></div>
-            <button class="btn btn-o" onclick="addHabit()">+ Add Habit</button>
+            <button class="btn btn-o admin-only" onclick="addHabit()">+ Add Habit</button>
         </div>
         <div class="card" id="habits_active_card">
             <div class="card-title">⚡ Active Habits</div>
@@ -1092,7 +1132,7 @@
                 <div class="form-group"><label>Budget (₹)</label><input type="number" class="fi" id="sh_budget" placeholder="e.g. 800"></div>
             </div>
             <div class="form-group" style="margin-bottom:10px"><label>Notes</label><input class="fi" id="sh_notes" placeholder="Size, colour, brand..."></div>
-            <button class="btn btn-o" onclick="addShopItem()">+ Add to Wish List</button>
+            <button class="btn btn-o admin-only" onclick="addShopItem()">+ Add to Wish List</button>
         </div>
         <div class="card">
             <div class="shop-sum" id="sh_summary"></div>
@@ -1139,6 +1179,18 @@
         <button class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="confirmNotifModal()">Set Reminder</button>
         <button class="modal-cancel" onclick="closeNotifModal()">Cancel</button>
     </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="auth_overlay">
+  <div class="auth-box">
+    <div class="auth-logo">⚡</div>
+    <div class="auth-title">Health & Life Dashboard</div>
+    <div class="auth-sub">Enter your access code to continue.<br>Read-only access is available.</div>
+    <input class="auth-input" id="auth_input" type="password" placeholder="Access code" autocomplete="off">
+    <div class="auth-err" id="auth_err"></div>
+    <button class="btn btn-o" style="width:100%" onclick="tryAuth()">Enter</button>
+  </div>
 </div>
 
 <!-- MONTH PICKER MODAL -->
@@ -1188,16 +1240,17 @@
     var _fbApp = null, _fbDb = null, _fbRef = null, _fbReady = false;
     var _syncTimer = null;
 
+    var _initDone = false;
+
     function initFirebase() {
       try {
-        if (typeof firebase === 'undefined') return;
+        if (typeof firebase === 'undefined') { initDashboard(); return; }
         _fbApp = firebase.initializeApp(FB_CONFIG);
         _fbDb  = firebase.database();
         _fbRef = _fbDb.ref('dashboard/data');
-        // Enable offline persistence (works without internet)
-        _fbDb.goOffline(); _fbDb.goOnline();
         _fbReady = true;
-        // Load from Firebase on start, seed localStorage
+
+        // Fetch once from server → seed localStorage → init
         _fbRef.once('value').then(function(snap) {
           var data = snap.val();
           if (data && typeof data === 'object') {
@@ -1205,28 +1258,41 @@
               try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
             });
           }
-          initDashboard();
+          if (!_initDone) { _initDone = true; initDashboard(); }
         }).catch(function() {
-          // Offline — use local cache
-          initDashboard();
+          if (!_initDone) { _initDone = true; initDashboard(); }
         });
-        // Keep in sync: when Firebase changes (another device), update localStorage and re-render
+
+        // Timeout fallback — if Firebase hangs for 4s, init with local cache
+        setTimeout(function() {
+          if (!_initDone) { _initDone = true; initDashboard(); }
+        }, 4000);
+
+        // Live sync listener — only fires for REMOTE changes AFTER init
         _fbRef.on('value', function(snap) {
+          if (!_initDone) return; // not ready yet, skip
           var data = snap.val();
           if (!data) return;
-          Object.keys(data).forEach(function(k) {
-            try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
+          SYNCED_KEYS.forEach(function(k) {
+            if (Object.prototype.hasOwnProperty.call(data, k)) {
+              try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
+            } else {
+              try { localStorage.removeItem(k); } catch(e) {}
+            }
           });
+          reRenderAll();
         });
+
       } catch(e) {
-        initDashboard(); // fallback
+        if (!_initDone) { _initDone = true; initDashboard(); }
       }
     }
 
     var SYNCED_KEYS = ['sched','m1','m2','groc_w','groc_3','groc_2',
       'tasks_active_list','tasks_done_list','expenses_list','exp_limits',
       'weight_log','theme','notif_dismissed','custom_groc',
-      'habits_active','habits_done','shop_wishlist','shop_bought','health_targets'];
+      'habits_active','habits_done','shop_wishlist','shop_bought',
+      'health_targets','custom_sched_rows'];
 
     function schedulePush() {
       if (_syncTimer) clearTimeout(_syncTimer);
@@ -1241,6 +1307,48 @@
         if (raw !== null) { try { out[k] = JSON.parse(raw); } catch(e) {} }
       });
       _fbRef.set(out).catch(function(){}); // silent fail when offline, Firebase queues it
+    }
+
+    function reRenderAll() {
+      buildSched();
+      buildM1();
+      buildM2();
+      buildGrocery();
+      renderTasks();
+      renderExpenses();
+      renderWeight();
+      renderLimits();
+      renderScores();
+      renderCustomGrocery();
+      renderCustomSchedList();
+      renderHabits();
+      renderShopping();
+    }
+
+    function forceSyncFromFirebase() {
+      var btn = document.getElementById('sync_btn');
+      if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+      if (!_fbRef) { alert('Not connected to Firebase.'); if (btn) { btn.textContent = '🔄'; btn.disabled = false; } return; }
+      _fbRef.once('value').then(function(snap) {
+        var data = snap.val();
+        if (data && typeof data === 'object') {
+          // Clear all synced keys first, then repopulate
+          SYNCED_KEYS.forEach(function(k) {
+            try { localStorage.removeItem(k); } catch(e) {}
+          });
+          Object.keys(data).forEach(function(k) {
+            try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
+          });
+          reRenderAll();
+          if (btn) { btn.textContent = '✅'; setTimeout(function(){ btn.textContent='🔄'; btn.disabled=false; }, 1500); }
+        } else {
+          if (btn) { btn.textContent = '🔄'; btn.disabled = false; }
+          alert('Firebase is empty or unreachable.');
+        }
+      }).catch(function() {
+        if (btn) { btn.textContent = '🔄'; btn.disabled = false; }
+        alert('Sync failed — check your internet connection.');
+      });
     }
 
     function ls_get(key) {
@@ -1376,8 +1484,56 @@
       {time:'8:00 PM', task:'Eat Meal 2'},
       {time:'10:30 PM', task:'Sleep by 10:30 PM'},
     ];
-    function buildSched() { build3Day('sched_wrap','sched','fl_sched',SCHED_ROWS); }
-    function buildSchedPast() { buildTracker('sched_past_wrap','sched','fl_sched','sd_s','sd_e',SCHED_ROWS); }
+    function getCustomSchedRows() {
+      var data = ls_get('custom_sched_rows');
+      return Object.keys(data).sort().map(function(k){ return data[k]; });
+    }
+
+    function addCustomSchedRow() {
+      var time = document.getElementById('cs_time').value.trim();
+      var task = document.getElementById('cs_task').value.trim();
+      if (!task) { alert('Enter a task name.'); return; }
+      var data = ls_get('custom_sched_rows');
+      var id = Date.now().toString();
+      data[id] = {id:id, time:time||'Custom', task:task};
+      ls_set('custom_sched_rows', data);
+      document.getElementById('cs_time').value = '';
+      document.getElementById('cs_task').value = '';
+      renderCustomSchedList();
+      buildSched();
+    }
+
+    function deleteCustomSchedRow(id) {
+      var data = ls_get('custom_sched_rows');
+      delete data[id];
+      ls_set('custom_sched_rows', data);
+      renderCustomSchedList();
+      buildSched();
+    }
+
+    function renderCustomSchedList() {
+      var data = ls_get('custom_sched_rows');
+      var keys = Object.keys(data);
+      var el = document.getElementById('custom_sched_list');
+      if (!el) return;
+      if (keys.length === 0) { el.innerHTML = ''; return; }
+      var html = '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Custom entries:</div>';
+      keys.forEach(function(id) {
+        var r = data[id];
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+        html += '<span style="flex:1;color:var(--text1);font-size:13px"><strong style="color:var(--accent)">' + esc(r.time) + '</strong> — ' + esc(r.task) + '</span>';
+        html += '<button class="btn btn-r btn-sm" onclick="deleteCustomSchedRow(\'' + id + '\')">✕</button>';
+        html += '</div>';
+      });
+      el.innerHTML = html;
+    }
+
+    function getAllSchedRows() {
+      return SCHED_ROWS.concat(getCustomSchedRows());
+    }
+
+    function buildSched() { build3Day('sched_wrap','sched','fl_sched',getAllSchedRows()); }
+    function buildSchedPast() { buildTracker('sched_past_wrap','sched','fl_sched','sd_s','sd_e',getAllSchedRows()); }
 
 
     // ═══════════════════════════════════════
@@ -1663,80 +1819,161 @@
 
     function renderExpenses() {
       var expenses = getExpenses();
+      var today = isoD(new Date());
+      var yest = isoD(new Date(Date.now()-86400000));
       var keys = Object.keys(expenses).sort(function(a,b) {
         return expenses[b].date.localeCompare(expenses[a].date);
       });
 
-      // Table 1
+      // Table 1 — Today + Yesterday only
       var t1 = document.getElementById('exp_t1');
-      var html1 = '<tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Type</th><th>Notes</th><th>Del</th></tr>';
-      if (keys.length === 0) {
-        html1 += '<tr><td colspan="6" style="text-align:center;color:#444;padding:20px">No expenses logged yet</td></tr>';
+      var todayYestKeys = keys.filter(function(id){ return expenses[id].date === today || expenses[id].date === yest; });
+      var html1 = '<tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Category</th><th>Type</th><th>Notes</th><th></th></tr>';
+      if (todayYestKeys.length === 0) {
+        html1 += '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px">No transactions today or yesterday</td></tr>';
       }
-      keys.forEach(function(id) {
+      todayYestKeys.forEach(function(id) {
         var e = expenses[id];
         var tcls = {Need:'t-need',Want:'t-want',Desire:'t-desire'}[e.type] || '';
         html1 += '<tr>';
-        html1 += '<td style="color:#888">' + e.date + '</td>';
-        html1 += '<td style="color:#e0e0e0">' + esc(e.desc) + '</td>';
+        html1 += '<td style="color:var(--text3);white-space:nowrap">' + e.date + '</td>';
+        html1 += '<td style="color:var(--text1);font-weight:500">' + esc(e.desc) + '</td>';
         html1 += '<td class="amt">₹' + Number(e.amt).toLocaleString('en-IN') + '</td>';
         html1 += '<td class="' + tcls + '">' + e.type + '</td>';
-        html1 += '<td style="color:' + (e.vartype==='Fixed'?'#bf5af2':'#ff9f0a') + ';font-size:11px">' + (e.vartype||'Variable') + '</td>';
-        html1 += '<td style="color:#555;font-size:11px">' + esc(e.notes||'') + '</td>';
-        html1 += '<td><button class="btn btn-r btn-sm" onclick="deleteExpense(\'' + id + '\')">✕</button></td>';
+        html1 += '<td style="color:' + (e.vartype==='Fixed'?'var(--purple)':'var(--yellow)') + ';font-size:11px">' + (e.vartype||'Variable') + '</td>';
+        html1 += '<td style="color:var(--text3);font-size:11px">' + esc(e.notes||'') + '</td>';
+        html1 += '<td style="text-align:right"><button class="btn btn-r btn-sm" style="padding:4px 8px" onclick="deleteExpense(\'' + id + '\')">✕</button></td>';
         html1 += '</tr>';
       });
-      t1.innerHTML = html1;
+      if (t1) t1.innerHTML = html1;
 
-      // Table 2 — Daily summary
-      var daily = {};
+      // Build daily + monthly aggregates from ALL data
+      var daily = {}, monthly = {};
       keys.forEach(function(id) {
         var e = expenses[id];
-        if (!daily[e.date]) daily[e.date] = {Need:0,Want:0,Desire:0};
+        if (!daily[e.date]) daily[e.date] = {Need:0,Want:0,Desire:0,varTotal:0};
         daily[e.date][e.type] = (daily[e.date][e.type]||0) + Number(e.amt);
+        if (e.vartype !== 'Fixed') daily[e.date].varTotal += Number(e.amt);
+        var month = e.date.slice(0,7);
+        if (!monthly[month]) monthly[month] = {Need:0,Want:0,Desire:0};
+        monthly[month][e.type] = (monthly[month][e.type]||0) + Number(e.amt);
       });
+
+      // Table 2 — Last 7 days + diff columns
+      var limits = ls_get('exp_limits');
       var t2 = document.getElementById('exp_t2');
-      var ddays = Object.keys(daily).sort(function(a,b) { return b.localeCompare(a); });
-      var html2 = '<tr><th>Date</th><th class="t-need">Needs ₹</th><th class="t-want">Wants ₹</th><th class="t-desire">Desires ₹</th><th>Total ₹</th></tr>';
-      if (ddays.length === 0) html2 += '<tr><td colspan="5" style="text-align:center;color:#444;padding:14px">No data yet</td></tr>';
-      ddays.forEach(function(d) {
+      var last7 = [];
+      for (var i = 0; i < 7; i++) {
+        var dd = new Date(Date.now() - i * 86400000);
+        last7.push(isoD(dd));
+      }
+      var html2 = '<tr><th>Date</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th><th>Var Spent</th><th>vs Limit</th></tr>';
+      var has2 = false;
+      last7.forEach(function(d) {
+        if (!daily[d]) return;
+        has2 = true;
         var row = daily[d];
         var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
+        var varSpent = row.varTotal || 0;
+        var curM = d.slice(0,7);
+        var dayLim = limits[curM] ? parseFloat(limits[curM]) : null;
+        var diffHtml = '—';
+        if (dayLim) {
+          var diff = varSpent - dayLim;
+          var pct = Math.round(varSpent / dayLim * 100);
+          var clr = diff > 0 ? 'var(--red)' : 'var(--green)';
+          diffHtml = '<span style="color:' + clr + ';font-weight:700">' + (diff > 0 ? '+' : '') + '₹' + Math.round(Math.abs(diff)).toLocaleString('en-IN') + ' (' + pct + '%)</span>';
+        }
         html2 += '<tr>';
-        html2 += '<td style="color:#888">' + d + '</td>';
+        html2 += '<td style="color:var(--text3);white-space:nowrap">' + d + '</td>';
         html2 += '<td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td>';
         html2 += '<td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td>';
         html2 += '<td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td>';
         html2 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td>';
+        html2 += '<td style="color:var(--yellow)">₹' + varSpent.toLocaleString('en-IN') + '</td>';
+        html2 += '<td>' + diffHtml + '</td>';
         html2 += '</tr>';
       });
-      t2.innerHTML = html2;
+      if (!has2) html2 += '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:14px">No data in last 7 days</td></tr>';
+      if (t2) t2.innerHTML = html2;
 
       // Table 3 — Monthly summary
-      var monthly = {};
-      keys.forEach(function(id) {
-        var e = expenses[id];
-        var month = e.date.slice(0,7); // YYYY-MM
-        if (!monthly[month]) monthly[month] = {Need:0,Want:0,Desire:0};
-        monthly[month][e.type] = (monthly[month][e.type]||0) + Number(e.amt);
-      });
       var t3 = document.getElementById('exp_t3');
       var mkeys = Object.keys(monthly).sort(function(a,b) { return b.localeCompare(a); });
-      var html3 = '<tr><th>Month</th><th class="t-need">Needs ₹</th><th class="t-want">Wants ₹</th><th class="t-desire">Desires ₹</th><th>Total ₹</th></tr>';
-      if (mkeys.length === 0) html3 += '<tr><td colspan="5" style="text-align:center;color:#444;padding:14px">No data yet</td></tr>';
+      var html3 = '<tr><th>Month</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th></tr>';
+      if (mkeys.length === 0) html3 += '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:14px">No data yet</td></tr>';
       mkeys.forEach(function(m) {
         var row = monthly[m];
         var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
         var mLabel = new Date(m + '-01').toLocaleDateString('en-IN', {month:'long',year:'numeric'});
-        html3 += '<tr>';
-        html3 += '<td style="color:#e0e0e0;font-weight:600">' + mLabel + '</td>';
+        html3 += '<tr><td style="font-weight:600;color:var(--text1)">' + mLabel + '</td>';
         html3 += '<td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td>';
         html3 += '<td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td>';
         html3 += '<td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td>';
-        html3 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td>';
-        html3 += '</tr>';
+        html3 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td></tr>';
       });
-      t3.innerHTML = html3;
+      if (t3) t3.innerHTML = html3;
+    }
+
+    // Historical fetch for expenses
+    function fetchExpenseHistory() {
+      var s = document.getElementById('exp_hist_s').value;
+      var e = document.getElementById('exp_hist_e').value;
+      if (!s || !e) { alert('Select date range.'); return; }
+      var expenses = getExpenses();
+      var limits = ls_get('exp_limits');
+      var keys = Object.keys(expenses).filter(function(id){ return expenses[id].date >= s && expenses[id].date <= e; });
+      keys.sort(function(a,b){ return expenses[b].date.localeCompare(expenses[a].date); });
+
+      // Transactions
+      var html = '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">All Transactions (' + s + ' → ' + e + ')</div>';
+      if (keys.length === 0) { html += '<div style="color:var(--text3);font-size:12px">No transactions in this range.</div>'; }
+      else {
+        html += '<div class="table-wrap"><table><tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Category</th><th>Type</th></tr>';
+        keys.forEach(function(id){
+          var ex = expenses[id];
+          var tcls = {Need:'t-need',Want:'t-want',Desire:'t-desire'}[ex.type]||'';
+          html += '<tr><td style="color:var(--text3)">' + ex.date + '</td><td style="color:var(--text1)">' + esc(ex.desc) + '</td><td class="amt">₹' + Number(ex.amt).toLocaleString('en-IN') + '</td><td class="' + tcls + '">' + ex.type + '</td><td style="color:var(--yellow);font-size:11px">' + (ex.vartype||'Variable') + '</td></tr>';
+        });
+        html += '</table></div>';
+      }
+
+      // Daily summary in range
+      var daily = {};
+      keys.forEach(function(id){
+        var ex = expenses[id];
+        if (!daily[ex.date]) daily[ex.date] = {Need:0,Want:0,Desire:0,varTotal:0};
+        daily[ex.date][ex.type] += Number(ex.amt);
+        if (ex.vartype !== 'Fixed') daily[ex.date].varTotal += Number(ex.amt);
+      });
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px">Daily Summary</div>';
+      var dkeys = Object.keys(daily).sort(function(a,b){ return b.localeCompare(a); });
+      if (dkeys.length === 0) { html += '<div style="color:var(--text3);font-size:12px">No data.</div>'; }
+      else {
+        html += '<div class="table-wrap"><table><tr><th>Date</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th><th>vs Limit</th></tr>';
+        dkeys.forEach(function(d){
+          var row = daily[d];
+          var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
+          var dayLim = limits[d.slice(0,7)] ? parseFloat(limits[d.slice(0,7)]) : null;
+          var diff = dayLim ? (row.varTotal - dayLim) : null;
+          var diffHtml = diff === null ? '—' : '<span style="color:' + (diff>0?'var(--red)':'var(--green)') + ';font-weight:700">' + (diff>0?'+':'') + '₹' + Math.abs(Math.round(diff)).toLocaleString('en-IN') + '</span>';
+          html += '<tr><td style="color:var(--text3)">' + d + '</td><td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td><td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td><td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td><td class="amt">₹' + total.toLocaleString('en-IN') + '</td><td>' + diffHtml + '</td></tr>';
+        });
+        html += '</table></div>';
+      }
+
+      // Monthly summary
+      var monthly2 = {};
+      keys.forEach(function(id){ var ex = expenses[id]; var m = ex.date.slice(0,7); if (!monthly2[m]) monthly2[m] = {Need:0,Want:0,Desire:0}; monthly2[m][ex.type] += Number(ex.amt); });
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px">Monthly Summary</div>';
+      var mkeys2 = Object.keys(monthly2).sort(function(a,b){ return b.localeCompare(a); });
+      if (mkeys2.length === 0) { html += '<div style="color:var(--text3);font-size:12px">No data.</div>'; }
+      else {
+        html += '<div class="table-wrap"><table><tr><th>Month</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th></tr>';
+        mkeys2.forEach(function(m){ var row = monthly2[m]; var total=(row.Need||0)+(row.Want||0)+(row.Desire||0); var ml = new Date(m+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'}); html += '<tr><td style="font-weight:600;color:var(--text1)">' + ml + '</td><td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td><td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td><td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td><td class="amt">₹' + total.toLocaleString('en-IN') + '</td></tr>'; });
+        html += '</table></div>';
+      }
+      document.getElementById('exp_hist_result').innerHTML = html;
     }
 
     // ═══════════════════════════════════════
@@ -1901,16 +2138,17 @@
     // ═══════════════════════════════════════
     function scoreForTracker(storeName, totalRows, dateStr) {
       var data = ls_get(storeName);
-      var green = 0, red = 0;
+      var green = 0, anyLogged = false;
       for (var i = 0; i < totalRows; i++) {
         var k = storeName + '_' + i + '_' + dateStr;
         var v = data[k] || 0;
-        if (v === 1) green++;
-        else if (v === 2) red++;
+        if (v === 1) { green++; anyLogged = true; }
+        else if (v === 2) { anyLogged = true; }
+        // unlogged (0) counted as missed against totalRows
       }
-      var total = green + red;
-      if (total === 0) return null;
-      return Math.round((green / (green + red)) * 100);
+      if (!anyLogged) return null;
+      // green / totalRows — unlogged items count against score
+      return Math.round((green / totalRows) * 100);
     }
 
     function expenseScoreForDate(dateStr) {
@@ -1997,16 +2235,21 @@
       var d = dateInput.value;
       if (!d) return;
 
-      var schedPct = scoreForTracker('sched', SCHED_ROWS.length, d);
+      var schedPct = scoreForTracker('sched', getAllSchedRows().length, d);
       var m1Pct = scoreForTracker('m1', M1_ROWS.length, d);
       var m2Pct = scoreForTracker('m2', M2_ROWS.length, d);
       var expData = expenseScoreForDate(d);
       var expPct = expData ? expData.pct : null;
 
-      // Overall: each metric worth 25%. Null metrics skipped, remainder redistributed equally.
-      var metrics = [schedPct, m1Pct, m2Pct,
-        expPct === null ? null : (expPct <= 100 ? expPct : Math.max(0, 200 - expPct))
-      ];
+      // If m1 has data but m2 doesn't → m2 = 0 (missed, not null)
+      // If m2 has data but m1 doesn't → m1 = 0
+      var m1Eff = m1Pct, m2Eff = m2Pct;
+      if (m1Pct !== null && m2Pct === null) m2Eff = 0;
+      if (m2Pct !== null && m1Pct === null) m1Eff = 0;
+
+      // Overall: 25% each. Null = no data at all (not even started). 0 = fully missed.
+      var expScore = expPct === null ? null : (expPct <= 100 ? expPct : Math.max(0, 200 - expPct));
+      var metrics = [schedPct, expScore, m1Eff, m2Eff];
       var defined = metrics.filter(function(v){ return v !== null; });
       var overall = defined.length > 0
         ? Math.round(defined.reduce(function(a,b){return a+b},0) / defined.length)
@@ -2026,48 +2269,84 @@
     // EXPENSE LIMIT
     // ═══════════════════════════════════════
     function saveLimit() {
-      var month = document.getElementById('lim_month').value.trim();
+      var curMonth = new Date().toISOString().slice(0,7);
       var amt = parseFloat(document.getElementById('lim_amt').value);
-      if (!month || !amt) { alert('Select a month and enter an amount.'); return; }
+      if (!amt || amt <= 0) { alert('Enter a valid daily limit amount.'); return; }
       var limits = ls_get('exp_limits');
-      if (limits[month]) { alert('Limit for ' + month + ' is already set and cannot be changed.'); return; }
-      limits[month] = amt;
+      if (limits[curMonth]) { alert('Limit for ' + curMonth + ' is already set and locked.'); return; }
+      limits[curMonth] = amt;
       ls_set('exp_limits', limits);
-      var btn = document.getElementById('lim_month_btn');
-      if (btn) { btn.textContent = 'Tap to select month…'; btn.style.color = 'var(--text3)'; }
-      document.getElementById('lim_month').value = '';
       document.getElementById('lim_amt').value = '';
       renderLimits();
       renderScores();
+    }
+
+    function daysInMonth(yyyymm) {
+      var parts = yyyymm.split('-');
+      return new Date(parseInt(parts[0]), parseInt(parts[1]), 0).getDate();
     }
 
     function renderLimits() {
       var limits = ls_get('exp_limits');
       var curMonth = new Date().toISOString().slice(0,7);
       var el = document.getElementById('limit_list');
-      if (!el) return;
-      // Show current month notice
-      var notice = '';
-      if (!limits[curMonth]) {
-        notice = '<div style="background:rgba(255,159,10,0.12);border:0.5px solid rgba(255,159,10,0.3);border-radius:10px;padding:10px;font-size:12px;color:var(--yellow);margin-bottom:10px">⚠️ No limit set for <strong>' + curMonth + '</strong>. Set one below so the Expenses score circle works.</div>';
-      } else {
-        notice = '<div style="background:rgba(52,199,89,0.08);border:0.5px solid rgba(52,199,89,0.25);border-radius:10px;padding:10px;font-size:12px;color:var(--green);margin-bottom:10px">✅ <strong>' + curMonth + '</strong> limit: ₹' + Number(limits[curMonth]).toLocaleString('en-IN') + '/day (locked)</div>';
+      var formRow = document.getElementById('lim_form_row');
+      var curMonthLabel = document.getElementById('lim_cur_month_label');
+      if (curMonthLabel) {
+        var d = new Date(curMonth + '-01');
+        curMonthLabel.textContent = d.toLocaleDateString('en-IN', {month:'long', year:'numeric'});
       }
-      var keys = Object.keys(limits).sort().reverse().filter(function(m){ return m !== curMonth; });
-      var html = notice;
-      if (keys.length > 0) {
-        html += '<div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Past months (locked)</div>';
-        keys.forEach(function(m) {
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+      if (!el) return;
+
+      var html = '';
+      if (limits[curMonth]) {
+        var dailyLim = parseFloat(limits[curMonth]);
+        var totalDays = daysInMonth(curMonth);
+        var monthBudget = dailyLim * totalDays;
+        // Calculate used (variable only)
+        var expenses = getExpenses();
+        var usedVar = 0, daysOver = 0, daysUnder = 0;
+        var dailyVar = {};
+        Object.keys(expenses).forEach(function(id) {
+          var e = expenses[id];
+          if (e.date.slice(0,7) === curMonth && e.vartype !== 'Fixed') {
+            usedVar += Number(e.amt);
+            if (!dailyVar[e.date]) dailyVar[e.date] = 0;
+            dailyVar[e.date] += Number(e.amt);
+          }
+        });
+        Object.keys(dailyVar).forEach(function(d) {
+          if (dailyVar[d] > dailyLim) daysOver++;
+          else daysUnder++;
+        });
+        var available = monthBudget - usedVar;
+        var usedPct = Math.round(usedVar / monthBudget * 100);
+        html += '<div style="background:rgba(52,199,89,0.06);border:0.5px solid rgba(52,199,89,0.2);border-radius:12px;padding:12px;margin-bottom:10px">';
+        html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;font-weight:700;color:var(--green)">✅ ' + curMonth + ' — LOCKED</span><span class="badge bw">₹' + dailyLim.toLocaleString('en-IN') + '/day</span></div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+        html += '<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:14px;font-weight:700;color:var(--yellow)">₹' + monthBudget.toLocaleString('en-IN') + '</div><div style="font-size:10px;color:var(--text3)">Monthly Budget</div></div>';
+        html += '<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:14px;font-weight:700;color:var(--red)">₹' + usedVar.toLocaleString('en-IN') + '</div><div style="font-size:10px;color:var(--text3)">Used (' + usedPct + '%)</div></div>';
+        html += '<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:14px;font-weight:700;color:' + (available >= 0 ? 'var(--green)' : 'var(--red)') + '">₹' + Math.abs(available).toLocaleString('en-IN') + '</div><div style="font-size:10px;color:var(--text3)">' + (available >= 0 ? 'Available' : 'Over budget') + '</div></div>';
+        html += '<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center"><div style="font-size:13px;font-weight:700"><span style="color:var(--red)">' + daysOver + 'd over</span> <span style="color:var(--text3)">·</span> <span style="color:var(--green)">' + daysUnder + 'd under</span></div><div style="font-size:10px;color:var(--text3)">Days (variable)</div></div>';
+        html += '</div></div>';
+        if (formRow) formRow.style.display = 'none';
+      } else {
+        html += '<div style="background:rgba(255,159,10,0.10);border:0.5px solid rgba(255,159,10,0.28);border-radius:10px;padding:10px;font-size:12px;color:var(--yellow);margin-bottom:10px">⚠️ No limit set for this month. Expenses score circle will show — until you set a limit.</div>';
+        if (formRow) formRow.style.display = 'block';
+      }
+
+      // Past months
+      var pastKeys = Object.keys(limits).sort().reverse().filter(function(m){ return m !== curMonth; });
+      if (pastKeys.length > 0) {
+        html += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;margin-top:4px">Past months</div>';
+        pastKeys.forEach(function(m) {
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
           html += '<span style="color:var(--text3);font-size:12px;flex:1">' + m + ' — ₹' + Number(limits[m]).toLocaleString('en-IN') + '/day</span>';
-          html += '<span class="badge bw" style="font-size:10px">Locked</span>';
+          html += '<span class="badge bw">Locked</span>';
           html += '</div>';
         });
       }
       el.innerHTML = html;
-      // Hide the form if current month already set
-      var formRow = document.getElementById('lim_form_row');
-      if (formRow) formRow.style.display = limits[curMonth] ? 'none' : 'grid';
     }
 
     // ═══════════════════════════════════════
@@ -2572,7 +2851,9 @@
     function apromptConfirm() {
       var val = document.getElementById('aprompt_input').value.trim();
       document.getElementById('aprompt_overlay').classList.remove('open');
-      if (_apromptCb) { _apromptCb(val); _apromptCb = null; }
+      var cb = _apromptCb;
+      _apromptCb = null;          // clear BEFORE calling so nested appPrompt works
+      if (cb) cb(val);
     }
 
     function apromptCancel() {
@@ -2639,6 +2920,72 @@
     }
 
     // ═══════════════════════════════════════
+    // AUTHENTICATION
+    // ═══════════════════════════════════════
+    var AUTH_ADMIN = 'Its me';       // admin passphrase
+    var AUTH_READONLY = 'GBC';       // read-only passphrase
+    var _authRole = null;            // 'admin' | 'readonly' | null
+
+    function checkAuth() {
+      try {
+        var stored = localStorage.getItem('_auth_role');
+        if (stored === 'admin' || stored === 'readonly') {
+          _authRole = stored;
+          applyAuthRole();
+          return true;
+        }
+      } catch(e) {}
+      return false;
+    }
+
+    function tryAuth() {
+      var val = document.getElementById('auth_input').value.trim();
+      var err = document.getElementById('auth_err');
+      if (val === AUTH_ADMIN) {
+        _authRole = 'admin';
+        localStorage.setItem('_auth_role', 'admin');
+        document.getElementById('auth_overlay').classList.remove('open');
+        applyAuthRole();
+        initFirebase();
+      } else if (val === AUTH_READONLY) {
+        _authRole = 'readonly';
+        localStorage.setItem('_auth_role', 'readonly');
+        document.getElementById('auth_overlay').classList.remove('open');
+        applyAuthRole();
+        initFirebase();
+      } else {
+        err.textContent = 'Invalid code. Try again.';
+        document.getElementById('auth_input').value = '';
+        setTimeout(function(){ err.textContent = ''; }, 2000);
+      }
+    }
+
+    function applyAuthRole() {
+      if (_authRole === 'readonly') {
+        document.body.classList.add('readonly');
+        // Show readonly badge
+        if (!document.getElementById('ro_badge')) {
+          var badge = document.createElement('div');
+          badge.id = 'ro_badge';
+          badge.innerHTML = '<div class="auth-readonly-badge" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:rgba(90,200,250,0.15);border:0.5px solid var(--teal);color:var(--teal);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700">👁 View-only mode</div>';
+          document.body.appendChild(badge);
+        }
+        // Hide the sync/theme buttons too
+        var syncBtn = document.getElementById('sync_btn');
+        var themeBtn = document.getElementById('theme_btn');
+        if (syncBtn) syncBtn.style.display = 'none';
+      } else {
+        document.body.classList.remove('readonly');
+      }
+    }
+
+    // Handle Enter key on auth input
+    document.addEventListener('DOMContentLoaded', function() {
+      var ai = document.getElementById('auth_input');
+      if (ai) ai.addEventListener('keydown', function(e){ if (e.key === 'Enter') tryAuth(); });
+    });
+
+    // ═══════════════════════════════════════
     // INIT
     // ═══════════════════════════════════════
     if ('serviceWorker' in navigator) {
@@ -2646,7 +2993,11 @@
     }
 
     window.addEventListener('load', function() {
-      initFirebase(); // handles loading from Firebase then calls initDashboard()
+      if (checkAuth()) {
+        initFirebase();
+      } else {
+        document.getElementById('auth_overlay').classList.add('open');
+      }
     });
 
     // initDashboard is called by initFirebase after data is loaded
@@ -2685,11 +3036,15 @@
       renderLimits();
       renderScores();
       renderCustomGrocery();
+      renderCustomSchedList();
       renderHabits();
       renderShopping();
 
       // Notifications (auto-request, no button needed)
       initNotifications();
+
+      // Safety re-render after 300ms to catch any timing edge cases
+      setTimeout(reRenderAll, 300);
     } // end initDashboard
 </script>
 </body>
