@@ -462,8 +462,8 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div class="header-title">Health & Life Dashboard</div>
         <div style="display:flex;gap:6px;align-items:center">
-          <button onclick="forceSyncFromFirebase()" id="sync_btn" title="Force sync from server" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🔄</button>
-          <button onclick="toggleTheme()" id="theme_btn" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🌙 Dark</button>
+            <button onclick="forceSyncFromFirebase()" id="sync_btn" title="Force sync from server" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🔄</button>
+            <button onclick="toggleTheme()" id="theme_btn" style="background:var(--bg3);border:0.5px solid var(--border);color:var(--text1);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;outline:none">🌙 Dark</button>
         </div>
     </div>
     <div class="tabs">
@@ -485,22 +485,22 @@
     <div id="sec_overview" class="section">
         <div class="metrics">
             <div class="metric">
-              <div class="metric-lbl">Current Weight</div>
-              <div class="metric-val" id="ov_wt" style="color:#60a5fa">—</div>
-              <div class="metric-sub" id="ov_wt_sub">Not logged yet</div>
-              <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
-                <span style="font-size:10px;color:var(--text3)">Target:</span>
-                <span id="ov_wt_tgt" style="font-size:11px;color:var(--text3)" onclick="editTarget('wt')" style="cursor:pointer">64 kg ✏️</span>
-              </div>
+                <div class="metric-lbl">Current Weight</div>
+                <div class="metric-val" id="ov_wt" style="color:#60a5fa">—</div>
+                <div class="metric-sub" id="ov_wt_sub">Not logged yet</div>
+                <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+                    <span style="font-size:10px;color:var(--text3)">Target:</span>
+                    <span id="ov_wt_tgt" style="font-size:11px;color:var(--text3)" onclick="editTarget('wt')" style="cursor:pointer">64 kg ✏️</span>
+                </div>
             </div>
             <div class="metric">
-              <div class="metric-lbl">Body Fat</div>
-              <div class="metric-val" id="ov_fat" style="color:#f87171">—</div>
-              <div class="metric-sub" id="ov_fat_sub">Not logged yet</div>
-              <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
-                <span style="font-size:10px;color:var(--text3)">Target:</span>
-                <span id="ov_fat_tgt" style="font-size:11px;color:var(--text3);cursor:pointer" onclick="editTarget('fat')">10–12% ✏️</span>
-              </div>
+                <div class="metric-lbl">Body Fat</div>
+                <div class="metric-val" id="ov_fat" style="color:#f87171">—</div>
+                <div class="metric-sub" id="ov_fat_sub">Not logged yet</div>
+                <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+                    <span style="font-size:10px;color:var(--text3)">Target:</span>
+                    <span id="ov_fat_tgt" style="font-size:11px;color:var(--text3);cursor:pointer" onclick="editTarget('fat')">10–12% ✏️</span>
+                </div>
             </div>
             <div class="metric"><div class="metric-lbl">Daily Calories</div><div class="metric-val" style="color:#ff6b00">1,600</div><div class="metric-sub">~450 kcal deficit</div></div>
             <div class="metric"><div class="metric-lbl">Protein Daily</div><div class="metric-val" style="color:#4ade80">~130g</div><div class="metric-sub">2g / kg body wt</div></div>
@@ -593,8 +593,8 @@
         <div class="card">
             <div class="card-title">➕ Add Custom Schedule Entry</div>
             <div class="form-grid">
-              <div class="form-group"><label>Time</label><input class="fi" id="cs_time" placeholder="e.g. 9:00 AM"></div>
-              <div class="form-group"><label>Task / Activity</label><input class="fi" id="cs_task" placeholder="e.g. Meditated for 10 min"></div>
+                <div class="form-group"><label>Time</label><input class="fi" id="cs_time" placeholder="e.g. 9:00 AM"></div>
+                <div class="form-group"><label>Task / Activity</label><input class="fi" id="cs_task" placeholder="e.g. Meditated for 10 min"></div>
             </div>
             <button class="btn btn-o btn-sm admin-only" onclick="addCustomSchedRow()">Add to Tracker</button>
             <div id="custom_sched_list" style="margin-top:10px"></div>
@@ -1016,11 +1016,11 @@
             <div class="card-title">📅 Monthly Spending Limit</div>
             <div id="limit_list" style="margin-bottom:10px"></div>
             <div id="lim_form_row">
-              <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Setting limit for: <strong id="lim_cur_month_label" style="color:var(--text1)"></strong></div>
-              <div class="form-grid" style="margin-bottom:8px">
-                <div class="form-group"><label>Daily Variable Limit (₹)</label><input type="number" class="fi" id="lim_amt" placeholder="e.g. 500"></div>
-              </div>
-              <button class="btn btn-g btn-sm admin-only" onclick="saveLimit()">Save Limit for This Month</button>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Setting limit for: <strong id="lim_cur_month_label" style="color:var(--text1)"></strong></div>
+                <div class="form-grid" style="margin-bottom:8px">
+                    <div class="form-group"><label>Daily Variable Limit (₹)</label><input type="number" class="fi" id="lim_amt" placeholder="e.g. 500"></div>
+                </div>
+                <button class="btn btn-g btn-sm admin-only" onclick="saveLimit()">Save Limit for This Month</button>
             </div>
             <input type="hidden" id="lim_month">
         </div>
@@ -1077,7 +1077,7 @@
                 </table>
             </div>
         </div>
-    <div class="card">
+        <div class="card">
             <div class="card-title">📂 Fetch Historical Expense Data</div>
             <div class="trk-ctrl">
                 <label>From <input type="date" id="exp_hist_s"></label>
@@ -1149,15 +1149,15 @@
 
 <!-- APP PROMPT MODAL (replaces native appPrompt()) -->
 <div class="aprompt-overlay" id="aprompt_overlay">
-  <div class="aprompt-sheet">
-    <div class="aprompt-title" id="aprompt_title"></div>
-    <div class="aprompt-sub" id="aprompt_sub"></div>
-    <input class="aprompt-input" id="aprompt_input" type="text" placeholder="">
-    <div class="aprompt-btn-row">
-      <button class="btn btn-w" style="flex:1" onclick="apromptCancel()">Cancel</button>
-      <button class="btn btn-o" style="flex:2" onclick="apromptConfirm()">Confirm</button>
+    <div class="aprompt-sheet">
+        <div class="aprompt-title" id="aprompt_title"></div>
+        <div class="aprompt-sub" id="aprompt_sub"></div>
+        <input class="aprompt-input" id="aprompt_input" type="text" placeholder="">
+        <div class="aprompt-btn-row">
+            <button class="btn btn-w" style="flex:1" onclick="apromptCancel()">Cancel</button>
+            <button class="btn btn-o" style="flex:2" onclick="apromptConfirm()">Confirm</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- TASK REMINDER MODAL -->
@@ -1183,14 +1183,14 @@
 
 <!-- AUTH MODAL -->
 <div class="auth-overlay" id="auth_overlay">
-  <div class="auth-box">
-    <div class="auth-logo">⚡</div>
-    <div class="auth-title">Health & Life Dashboard</div>
-    <div class="auth-sub">Enter your access code to continue.<br>Read-only access is available.</div>
-    <input class="auth-input" id="auth_input" type="password" placeholder="Access code" autocomplete="off">
-    <div class="auth-err" id="auth_err"></div>
-    <button class="btn btn-o" style="width:100%" onclick="tryAuth()">Enter</button>
-  </div>
+    <div class="auth-box">
+        <div class="auth-logo">⚡</div>
+        <div class="auth-title">Health & Life Dashboard</div>
+        <div class="auth-sub">Enter your GBC to continue.<br>Read-only access is available.</div>
+        <input class="auth-input" id="auth_input" type="password" placeholder="Access code" autocomplete="off">
+        <div class="auth-err" id="auth_err"></div>
+        <button class="btn btn-o" style="width:100%" onclick="tryAuth()">Enter</button>
+    </div>
 </div>
 
 <!-- MONTH PICKER MODAL -->
@@ -1239,6 +1239,8 @@
 
     var _fbApp = null, _fbDb = null, _fbRef = null, _fbReady = false;
     var _syncTimer = null;
+    var _localChangeTime = 0;   // timestamp of last local edit
+    var _pendingPush = false;   // true while a push is in-flight
 
     var _initDone = false;
 
@@ -1270,7 +1272,10 @@
 
         // Live sync listener — only fires for REMOTE changes AFTER init
         _fbRef.on('value', function(snap) {
-          if (!_initDone) return; // not ready yet, skip
+          if (!_initDone) return;
+          // Skip if we have a local change in the last 6 seconds or a push in-flight
+          // This prevents Firebase echoing our own writes back and "reviving" deleted data
+          if (_pendingPush || (Date.now() - _localChangeTime < 6000)) return;
           var data = snap.val();
           if (!data) return;
           SYNCED_KEYS.forEach(function(k) {
@@ -1306,7 +1311,14 @@
         var raw = localStorage.getItem(k);
         if (raw !== null) { try { out[k] = JSON.parse(raw); } catch(e) {} }
       });
-      _fbRef.set(out).catch(function(){}); // silent fail when offline, Firebase queues it
+      _pendingPush = true;
+      _fbRef.set(out).then(function() {
+        _pendingPush = false;
+      }).catch(function() {
+        _pendingPush = false;
+        // Retry once after 3 seconds on failure
+        setTimeout(pushToFirebase, 3000);
+      });
     }
 
     function reRenderAll() {
@@ -1356,10 +1368,12 @@
     }
     function ls_set(key, val) {
       try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+      _localChangeTime = Date.now();
       schedulePush();
     }
     function ls_clear(key) {
       try { localStorage.removeItem(key); } catch(e) {}
+      _localChangeTime = Date.now();
       schedulePush();
     }
     function flash(id) {
