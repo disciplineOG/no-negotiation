@@ -386,12 +386,44 @@
         .auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
         .auth-err{font-size:12px;color:var(--red);margin-bottom:10px;min-height:18px}
         .auth-readonly-badge{display:inline-block;background:rgba(90,200,250,0.12);color:var(--teal);border:0.5px solid rgba(90,200,250,0.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;margin-top:8px}
+        /* ══════ WEIGHT CHART ══════ */
+        .wt-chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .wt-chart-wrap svg{display:block;min-width:280px}
+
+        /* ══════ QUICK LOG MODAL ══════ */
+        .ql-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1500;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px)}
+        .ql-overlay.open{display:flex}
+        .ql-sheet{background:var(--bg2);border-radius:22px 22px 0 0;padding:18px 16px 36px;width:100%;max-width:480px;max-height:82vh;overflow-y:auto}
+        .ql-title{font-size:15px;font-weight:700;color:var(--text1);margin-bottom:4px}
+        .ql-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+        .ql-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border)}
+        .ql-row:last-child{border-bottom:none}
+        .ql-label{font-size:13px;color:var(--text2);flex:1}
+        .ql-time{font-size:11px;color:var(--accent);margin-right:8px;white-space:nowrap}
+
+        /* ══════ WATER TRACKER ══════ */
+        .water-grid{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}
+        .water-cup{width:32px;height:36px;border-radius:4px;border:1.5px solid rgba(90,200,250,0.35);background:transparent;cursor:pointer;transition:all .15s;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:10px;color:transparent}
+        .water-cup.filled{background:rgba(90,200,250,0.28);border-color:var(--teal);box-shadow:0 0 6px rgba(90,200,250,0.4);color:var(--teal)}
+        .water-cup:active{transform:scale(0.88)}
+
+        /* ══════ WEEKLY REPORT ══════ */
+        .report-day{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+        .report-day:last-child{border-bottom:none}
+        .report-bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+        .report-bar{height:6px;border-radius:3px;transition:width .4s}
+
+        /* ══════ JOURNAL ══════ */
+        .journal-entry{padding:10px 12px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border:0.5px solid var(--border)}
+        .journal-entry-date{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+        .journal-entry-text{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap}
         /* READ-ONLY MODE: hides all mutation controls */
         body.readonly .admin-only{display:none !important}
-        body.readonly .fi:not([readonly]){pointer-events:none;opacity:0.6}
-        body.readonly .fs{pointer-events:none;opacity:0.6}
+        body.readonly .fi:not([readonly]):not(.view-ok){pointer-events:none;opacity:0.6}
+        body.readonly .fs:not(.view-ok){pointer-events:none;opacity:0.6}
         body.readonly .ft{pointer-events:none;opacity:0.6}
-        body.readonly .tri-btn{pointer-events:none}
+        body.readonly .tri-btn{pointer-events:none !important}
+        body.readonly .ro-block{pointer-events:none !important;opacity:0.5}
 
         /* ══════════════════════════════════════
            NOTIFICATION BANNER
@@ -468,14 +500,15 @@
     </div>
     <div class="tabs">
         <button class="tab active" id="tab_overview" onclick="showTab('overview')">Overview</button>
-        <button class="tab" id="tab_schedule" onclick="showTab('schedule')">Schedule</button>
-        <button class="tab" id="tab_meal1" onclick="showTab('meal1')">Meal 1</button>
-        <button class="tab" id="tab_meal2" onclick="showTab('meal2')">Meal 2</button>
+        <button class="tab" id="tab_schedule" onclick="showTab('schedule')">My Day</button>
+        <button class="tab" id="tab_meallog" onclick="showTab('meallog')">Meal Log</button>
+        <button class="tab" id="tab_recipes" onclick="showTab('recipes')">Recipes</button>
         <button class="tab" id="tab_grocery" onclick="showTab('grocery')">Grocery</button>
         <button class="tab" id="tab_tasks" onclick="showTab('tasks')">Tasks</button>
         <button class="tab" id="tab_expenses" onclick="showTab('expenses')">Expenses</button>
         <button class="tab" id="tab_habits" onclick="showTab('habits')">Daily Forge</button>
         <button class="tab" id="tab_shopping" onclick="showTab('shopping')">Wish & Buy</button>
+        <button class="tab" id="tab_journal" onclick="showTab('journal')">Journal</button>
     </div>
 </div>
 
@@ -524,8 +557,7 @@
                 <div class="card-title" style="margin-bottom:0">🏆 Score of the Day</div>
                 <div style="display:flex;align-items:center;gap:8px">
                     <label style="font-size:11px;color:var(--text3)">Date</label>
-                    <input type="date" id="score_date" class="fi" style="padding:5px 10px;font-size:12px;width:auto" onchange="renderScores()">
-                </div>
+                    <input type="date" id="score_date" class="fi view-ok" style="padding:5px 10px;font-size:12px;width:auto" onchange="renderScores()">                </div>
             </div>
             <div class="score-row" id="score_row">
                 <!-- rendered by JS -->
@@ -539,6 +571,27 @@
                 Circles show score for selected date. Select any past date to view history.
             </div>
         </div>
+        <!-- WATER TRACKER -->
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+                <div class="card-title" style="margin-bottom:0">💧 Water Intake</div>
+                <div style="font-size:11px;color:var(--text3)" id="water_label">0 / 3,000 ml</div>
+            </div>
+            <div class="water-grid" id="water_cups"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                <button class="btn btn-w btn-sm admin-only" onclick="addWater(250)">+250ml</button>
+                <button class="btn btn-w btn-sm admin-only" onclick="addWater(500)">+500ml</button>
+                <button class="btn btn-w btn-sm admin-only" onclick="resetWater()">↩ Reset</button>
+            </div>
+        </div>
+
+        <!-- WEEKLY REPORT -->
+        <div class="card">
+            <div class="card-title">📊 Weekly Report Card</div>
+            <div id="weekly_report"></div>
+        </div>
+
+        <!-- WEIGHT LOG + CHART -->
         <div class="card">
             <div class="card-title">⚖️ Weight Progress Log</div>
             <div class="form-grid" style="gap:8px;margin-bottom:10px">
@@ -548,6 +601,7 @@
                 <div class="form-group"><label>Fat (kg)</label><input type="number" class="fi" id="wp_fatkg" placeholder="auto" step="0.1" id="wp_fatkg_disp" readonly style="opacity:.6"></div>
             </div>
             <button class="btn btn-o admin-only" onclick="addWeight()" style="margin-bottom:12px">+ Log Weight</button>
+            <div class="wt-chart-wrap" id="wt_chart" style="margin-bottom:12px"></div>
             <div class="table-wrap">
                 <table id="wp_table">
                     <tr><th>Date</th><th>Weight (kg)</th><th>Change</th><th>Fat %</th><th>Fat (kg)</th><th>Del</th></tr>
@@ -561,24 +615,8 @@
     <div id="sec_schedule" class="section">
         <div class="card">
             <div class="card-title">Daily Routine</div>
-            <div class="tl">
-                <div class="tl-item"><div class="tl-time">6:30 AM — Wakeup</div><div class="tl-desc">Wake up. Drink 500–800ml warm water immediately. Do not eat — fasted state maximises fat burn.</div></div>
-                <div class="tl-item"><div class="tl-time">6:30–7:10 AM — Morning Cardio</div><div class="tl-desc">Cycling / jogging / brisk walking outdoors 30–40 min. Fasted cardio = direct fat burn. Target heart rate 120–140 BPM.</div></div>
-                <div class="tl-item"><div class="tl-time">7:15–9:30 AM — Freshen up + Meal 1 Prep</div><div class="tl-desc">Shower. Steam/boil veggies. Blend dressing. Assemble salad box. Pack lunch box + dressing jar separately.</div></div>
-                <div class="tl-item"><div class="tl-time">10:00 AM — Commute to Office</div><div class="tl-desc">Carry Meal 1 box + dressing jar + water bottle. Continue sipping water during commute.</div></div>
-                <div class="tl-item"><div class="tl-time">10:00–1:30 PM — Work</div><div class="tl-desc">No snacking — extend fasted window for maximum fat loss. Sip water.</div></div>
-                <div class="tl-item"><div class="tl-time">1:30–2:30 PM — Lunch (Meal 1)</div><div class="tl-desc">Start with lemon water. Then eat full salad bowl — pour dressing when eating. Heat veggies in office oven if available. Eat slowly.</div></div>
-                <div class="tl-item"><div class="tl-time">2:30–3:30 PM — Work</div><div class="tl-desc">Sip water. Post-meal digestion walk if possible (5 min).</div></div>
-                <div class="tl-item"><div class="tl-time">3:30–4:00 PM — Green Tea</div><div class="tl-desc">1 cup green tea (no sugar, no milk). Boosts afternoon metabolism, reduces hunger.</div></div>
-                <div class="tl-item"><div class="tl-time">4:00–4:30 PM — Work</div></div>
-                <div class="tl-item"><div class="tl-time">4:30–5:00 PM — Commute Home</div></div>
-                <div class="tl-item"><div class="tl-time">5:00–5:30 PM — Rest + Pre-Workout Snack</div><div class="tl-desc">1 ripe banana (potassium, B6, fast energy) OR 5 soaked dates + 5 almonds. Rest 20–25 min before gym.</div></div>
-                <div class="tl-item"><div class="tl-time">5:30–6:30 PM — Gym</div><div class="tl-desc">Strength training — compound lifts: squats, deadlifts, bench, rows. 45–60 min. Builds muscle while in deficit.</div></div>
-                <div class="tl-item"><div class="tl-time">6:30–7:00 PM — Coconut Water + Rest</div><div class="tl-desc">200ml coconut water immediately post-gym. Replenishes electrolytes, potassium. Shower.</div></div>
-                <div class="tl-item"><div class="tl-time">7:00–7:30 PM — Meal 2 Prep</div><div class="tl-desc">Start chicken chunks pan-fry. Boil sweet potato + egg simultaneously. Takes ~20–25 min total.</div></div>
-                <div class="tl-item"><div class="tl-time">8:00–8:30 PM — Dinner (Meal 2)</div><div class="tl-desc">Eat pan-fried chicken + veggie bowl. Must finish by 8:30 PM latest (close eating window).</div></div>
-                <div class="tl-item"><div class="tl-time">8:30–10:30 PM — Wind Down</div><div class="tl-desc">Soak almonds + walnuts for tomorrow. Light stretching. Skin care. Dim lights from 10 PM. No screens 30 min before sleep.</div></div>
-                <div class="tl-item"><div class="tl-time">10:30 PM — Sleep</div><div class="tl-desc">8 hours. Growth hormone peaks during sleep — critical for fat loss and muscle repair.</div></div>
+            <div class="tl" id="daily_routine_tl">
+                <!-- rendered dynamically by renderDailyRoutine() -->
             </div>
         </div>
         <div class="card">
@@ -611,360 +649,130 @@
         </div>
     </div>
 
-    <!-- ═══ MEAL 1 ═══ -->
-    <div id="sec_meal1" class="section">
-
+    <!-- ═══ MEAL LOG ═══ -->
+    <div id="sec_meallog" class="section">
         <div class="card">
-            <div class="sec-header"><div class="sec-num">1</div><div class="sec-label">Preparation Guide</div></div>
-            <div class="tl">
-                <div class="tl-item"><div class="tl-time">Night Before (5 min)</div><div class="tl-desc">Soak 10 almonds and 4 walnut halves in separate small bowls. Cover. Soak overnight 8 hours.</div></div>
-                <div class="tl-item"><div class="tl-time">Morning Step 1 — Boil Beetroot (20 min · 800W)</div><div class="tl-desc">Peel and dice beetroot. Add to pot with water to cover. Induction 800W. Boil 20 min. Drain. Cool. (Longest step — start first.)</div></div>
-                <div class="tl-item"><div class="tl-time">Morning Step 2 — Steam all veggies (8–10 min · 500W)</div><div class="tl-desc">Place carrot pieces in steamer basket first (needs 8 min). After 2 min add whole green beans (need 6 min). After 3 more min add broccoli florets (need 5 min). Final 2 min add capsicum. All done together in one steamer. Induction 500W throughout.</div></div>
-                <div class="tl-item"><div class="tl-time">Morning Step 3 — Blend Dressing (2 min)</div><div class="tl-desc">Peel soaked almonds (slide skin off). Add to blender: paneer 40g + curd 30g + lemon juice 10ml + 2 garlic cloves (peeled) + 1 green chilli + coriander + salt to taste. Blend smooth. Pour into small jar with lid.</div></div>
-                <div class="tl-item"><div class="tl-time">Morning Step 4 — Assemble Salad Box</div><div class="tl-desc">In large airtight container: layer steamed carrot, beans, broccoli, capsicum, boiled beetroot. Add raw tomato (seeds removed) and onion rings. Place soaked almonds + walnut halves on top. Scatter chia seeds, ground flax, pumpkin seeds, sunflower seeds. Seal box. Carry dressing jar SEPARATELY — pour only when eating.</div></div>
+            <div class="card-title">🍽️ Log What You Ate</div>
+            <div class="info-o">Select a date and the meals you had. Then log each ingredient in the tracker below. Your score updates automatically.</div>
+            <div class="form-grid" style="margin-bottom:10px">
+                <div class="form-group"><label>Date</label><input type="date" class="fi view-ok" id="ml_date" onchange="renderMealLog()"></div>
             </div>
-            <div class="note">Do NOT pour dressing into box before leaving home — it makes everything soggy by lunchtime. Always carry in separate jar and mix at office just before eating.</div>
+            <div id="ml_meal_select" style="margin-bottom:12px"></div>
+            <button class="btn btn-o btn-sm admin-only" onclick="saveMealLogSelection()">✓ Confirm Meal Selection</button>
         </div>
-
+        <div id="ml_tracker_wrap"></div>
         <div class="card">
-            <div class="sec-header"><div class="sec-num">2</div><div class="sec-label">Meal 1 — Nutrition Summary</div></div>
-            <div class="sum-grid">
-                <div class="sum-box"><div class="sv" style="color:#ff6b00">725</div><div class="sl">Total kcal</div><div class="sp">45% of daily</div></div>
-                <div class="sum-box"><div class="sv" style="color:#4ade80">~34g</div><div class="sl">Protein</div><div class="sp">26% of target</div></div>
-                <div class="sum-box"><div class="sv" style="color:#fbbf24">~52g</div><div class="sl">Carbs</div><div class="sp">Complex only</div></div>
-                <div class="sum-box"><div class="sv" style="color:#f472b6">~40g</div><div class="sl">Fats</div><div class="sp">Omega-3 rich</div></div>
-                <div class="sum-box"><div class="sv" style="color:#2dd4bf">~18g</div><div class="sl">Fibre</div><div class="sp">72% daily need</div></div>
-            </div>
-            <div class="divider"></div>
-            <div class="card-title">Micronutrients Covered</div>
-            <div class="row2" style="gap:6px;font-size:12px">
-                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Vit A · Beta-carotene (carrot)<br><span style="color:#4ade80">✓</span> Vit C (broccoli, capsicum, tomato)<br><span style="color:#4ade80">✓</span> Vit E (almonds, sunflower)<br><span style="color:#4ade80">✓</span> Vit K (broccoli, beans, coriander)<br><span style="color:#4ade80">✓</span> B12 (paneer, curd)<br><span style="color:#4ade80">✓</span> Folate (beans, broccoli, beetroot)</div>
-                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Calcium (almonds, chia, paneer)<br><span style="color:#4ade80">✓</span> Iron (beans, pumpkin seeds)<br><span style="color:#4ade80">✓</span> Magnesium (pumpkin, almonds)<br><span style="color:#4ade80">✓</span> Zinc (pumpkin seeds, beans)<br><span style="color:#4ade80">✓</span> Omega-3 (walnuts, flax, chia)<br><span style="color:#4ade80">✓</span> Probiotics (curd in dressing)</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                <div class="card-title" style="margin-bottom:0">Meal 1 Ingredient Tracker <span class="flash" id="fl_m1">✓ Saved</span></div>
-                <div style="font-size:11px;color:var(--text3)" id="m1_date_label"></div>
-            </div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap once = ✅ done &nbsp;|&nbsp; Tap again = ❌ missed &nbsp;|&nbsp; Tap again = reset</div>
-            <div class="tracker-outer" id="m1_wrap"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">📂 Past Meal 1 Data</div>
+            <div class="card-title">📂 Past Meal Log</div>
             <div class="trk-ctrl">
-                <label>From <input type="date" id="m1_s" value="2025-04-27"></label>
-                <label>To <input type="date" id="m1_e" value="2025-05-27"></label>
-                <button class="btn btn-o btn-sm" onclick="buildM1Past()">Fetch</button>
+                <label>From <input type="date" id="ml_hist_s"></label>
+                <label>To <input type="date" id="ml_hist_e"></label>
+                <button class="btn btn-o btn-sm" onclick="renderMealLogHistory()">Fetch</button>
             </div>
-            <div class="tracker-outer" id="m1_past_wrap"></div>
-        </div>
-
-        <div class="card">
-            <div class="sec-header"><div class="sec-num">3</div><div class="sec-label">Ingredients · Quantity · Cooking · Nutrients</div></div>
-            <div class="table-wrap">
-                <table>
-                    <tr><th>Ingredient</th><th>Qty</th><th>Cal</th><th>How to Cook</th><th>Induction</th><th>Key Nutrients & Benefits</th></tr>
-                    <tr>
-                        <td><strong>Carrot</strong></td><td>80g</td><td>33</td>
-                        <td><span class="cook">Steam</span></td>
-                        <td><span class="temp">500W · 8 min · Steam</span></td>
-                        <td>Beta-carotene (Vit A → eye health, night vision, skin glow). Steaming retains 25% more beta-carotene than boiling. Vit K, potassium, fibre.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Beetroot</strong></td><td>60g</td><td>26</td>
-                        <td><span class="cook">Boil</span></td>
-                        <td><span class="temp">800W · 20 min · Boil</span></td>
-                        <td>Nitrates (dilate blood vessels → heart health, lower BP, better workout endurance). Folate (brain), iron, betalains (liver detox, anti-inflammatory, clears skin).</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Broccoli</strong></td><td>80g</td><td>27</td>
-                        <td><span class="cook">Steam</span></td>
-                        <td><span class="temp">500W · 5 min · Steam</span></td>
-                        <td>Sulforaphane (liver detox, anti-cancer). Vit C (collagen, skin). Vit K (bones). Calcium. Do NOT overboil — destroys 70% of sulforaphane. Steam only.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Whole Green Beans</strong></td><td>80g</td><td>27</td>
-                        <td><span class="cook">Steam</span></td>
-                        <td><span class="temp">500W · 6 min · Steam</span></td>
-                        <td>Fibre (gut bacteria food), Vit C, Vit K (bone density), folate, iron, silicon (bone strength). Steaming keeps crunch and colour — do not boil into mush.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Capsicum (green)</strong></td><td>50g</td><td>10</td>
-                        <td><span class="cook">Steam</span></td>
-                        <td><span class="temp">500W · 3 min · Steam</span></td>
-                        <td>Highest Vit C of any capsicum variety. Vit B6, antioxidants. Eat al dente (slight crunch) — preserves Vit C best. Over-steaming destroys Vit C.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Tomato</strong></td><td>80g</td><td>14</td>
-                        <td><span class="cook">Raw</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>Lycopene (UV skin protection, reduces acne, anti-aging). Vit C, potassium, Vit K. Eating with seeds/nuts increases lycopene absorption 4x.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Onion</strong></td><td>40g</td><td>16</td>
-                        <td><span class="cook">Raw</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>Quercetin (anti-inflammatory, reduces histamine/allergies, nasal health). Prebiotic fibre (feeds gut bacteria). Sulphur (hair keratin, skin collagen synthesis).</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Almonds (soaked, peeled)</strong></td><td>10 almonds · 12g</td><td>70</td>
-                        <td><span class="cook">Soak overnight, peel</span></td>
-                        <td><span class="temp">No heat · Soak 8h</span></td>
-                        <td>10/day is the ideal dose — proven for brain and heart health without excess calories (70 kcal). Soaking removes tannins → 2x better absorption. Vit E (skin), Mg (sleep, muscle), calcium (bones), L-arginine (blood circulation). Peel brown skin before eating.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Walnuts (soaked)</strong></td><td>4 halves · 14g</td><td>92</td>
-                        <td><span class="cook">Soak 6h</span></td>
-                        <td><span class="temp">No heat · Soak 6h</span></td>
-                        <td>4 halves/day = optimal omega-3 dose without excess calories. ALA omega-3 (brain, anti-inflammatory, reduces myopia progression, skin barrier). Melatonin (sleep quality), antioxidants. Only nut with significant plant omega-3.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Chia Seeds</strong></td><td>10g</td><td>49</td>
-                        <td><span class="cook">Raw, scatter on top</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>ALA omega-3 (brain, eyes, skin). Calcium (more than milk per gram). Soluble fibre (forms gel → slows glucose spike → no energy crash after lunch). Boron (bone density).</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Pumpkin Seeds</strong></td><td>15g</td><td>83</td>
-                        <td><span class="cook">Raw, scatter on top</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>15g/day is ideal — provides 2mg zinc (30% daily need). Zinc = testosterone support, skin sebum control, hair follicle strength. Mg, iron, tryptophan (serotonin precursor → mood, sleep). Best seed for men's hormonal health.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Flax Seeds (ground)</strong></td><td>10g</td><td>55</td>
-                        <td><span class="cook">Grind fresh, scatter</span></td>
-                        <td><span class="temp">No heat · Grind fresh</span></td>
-                        <td>MUST grind — whole seeds pass through undigested. 10g/day is the recommended dose. Lignans (hormone balance), ALA omega-3, soluble fibre (lowers LDL by 10–15%). Improves skin barrier. Store ground seeds in fridge.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Sunflower Seeds</strong></td><td>10g</td><td>58</td>
-                        <td><span class="cook">Raw, scatter on top</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>10g/day is sufficient — provides Vit E (15% daily need). Vit E (skin elasticity, anti-aging, anti-acne). Selenium (thyroid function, immunity). B1 (energy). Copper (melanin production → black hair pigment).</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Paneer (dressing)</strong></td><td>40g</td><td>119</td>
-                        <td><span class="cook">Raw, blend</span></td>
-                        <td><span class="temp">No heat · Blend raw</span></td>
-                        <td>Complete protein (all amino acids). Calcium + phosphorus (teeth, bones). B12 (nerve function, energy). Creamy base for dressing — adds satiety.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Curd (dressing)</strong></td><td>30g</td><td>29</td>
-                        <td><span class="cook">Raw, blend</span></td>
-                        <td><span class="temp">No heat · Blend raw</span></td>
-                        <td>Probiotics (Lactobacillus → gut microbiome → better digestion, clearer skin, stronger immunity). Calcium, B12, casein protein.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Garlic (dressing)</strong></td><td>2 cloves · 6g</td><td>9</td>
-                        <td><span class="cook">Raw, blend</span></td>
-                        <td><span class="temp">No heat · Blend raw</span></td>
-                        <td>Raw garlic has 3x more allicin than cooked. Allicin = lowers LDL cholesterol, antibacterial (clears acne bacteria), boosts immunity, improves gut health.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Green Chilli (dressing)</strong></td><td>1 small · 5g</td><td>2</td>
-                        <td><span class="cook">Raw, blend</span></td>
-                        <td><span class="temp">No heat · Blend raw</span></td>
-                        <td>Capsaicin — thermogenic effect boosts metabolic rate 4–5%. Vit C. Anti-inflammatory. Adjust heat to your comfort.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Coriander (dressing)</strong></td><td>10g</td><td>2</td>
-                        <td><span class="cook">Raw, blend</span></td>
-                        <td><span class="temp">No heat · Blend raw</span></td>
-                        <td>Vit K (bone density, blood clotting). Heavy metal detox (binds toxins in gut). Digestive enzyme stimulant. Anti-inflammatory.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Lemon Juice (dressing)</strong></td><td>10ml</td><td>3</td>
-                        <td><span class="cook">Fresh squeeze</span></td>
-                        <td><span class="temp">No heat · Fresh</span></td>
-                        <td>Vit C (collagen → skin glow, fades spots). Citric acid boosts iron absorption from veggies by 3x. Liver detox. Kick-starts digestion.</td>
-                    </tr>
-                    <tr class="total-row"><td colspan="2"><strong>TOTAL MEAL 1</strong></td><td><strong>725</strong></td><td colspan="3">~45% of daily 1,600 kcal</td></tr>
-                </table>
-            </div>
-            <div class="note">Steaming guide (Prestige Iris): Add 1.5 cups water to pot. Place steel steamer basket inside. Set 500W. Cover lid. Start timer when steam rises. Veggies should be tender-firm — not mushy. For beetroot (no basket needed) — boil directly in water at 800W for 20 min.</div>
+            <div id="ml_hist_wrap"></div>
         </div>
     </div>
 
-    <!-- ═══ MEAL 2 ═══ -->
-    <div id="sec_meal2" class="section">
-
-        <div class="card">
-            <div class="sec-header"><div class="sec-num">1</div><div class="sec-label">Preparation Guide (20–25 min total)</div></div>
-            <div class="tl">
-                <div class="tl-item"><div class="tl-time">Step 1 — Marinate Chicken (before gym or on return)</div><div class="tl-desc">Ask butcher to cut breast into curry-size chunks (~3–4cm). Mix marinade: ½ tsp salt + ½ tsp red chilli powder + ¼ tsp turmeric + 1 tbsp ginger-garlic paste + juice of ½ lemon. Coat chunks well. Marinate minimum 30 min. Best: marinate morning in fridge, ready when you return from gym.</div></div>
-                <div class="tl-item"><div class="tl-time">Step 2 — Boil Sweet Potato + Egg simultaneously (12 min · 800W)</div><div class="tl-desc">Add sweet potato chunks + 1 egg to pot. Fill water to cover. Induction 800W. Start timer. Remove egg at 12 min exactly (hard boil). Continue potato 2–3 more min if needed. Cool egg in cold water, peel.</div></div>
-                <div class="tl-item"><div class="tl-time">Step 3 — Pan-fry Chicken Chunks (10–12 min)</div><div class="tl-desc">Heat pan on 300W for 1 min. Add 1 tsp coconut oil. Place marinated chunks in single layer — do not overcrowd. Set 500W. Cook 5–6 min stirring occasionally until all sides are sealed and slightly charred. Chunks cook faster than whole breast — done when no pink inside. Remove and keep aside.</div></div>
-                <div class="tl-item"><div class="tl-time">Step 4 — Stir-fry Veggies in same pan (7 min · 500W)</div><div class="tl-desc">Same pan (residual marinade flavour is the seasoning). Add onion first → cook 2 min. Add whole beans + capsicum → cook 2 min. Add broccoli last → cook 2 min. Stir constantly. Season with salt + black pepper. Veggies should have slight char, not soggy. Remove from heat.</div></div>
-                <div class="tl-item"><div class="tl-time">Step 5 — Plate</div><div class="tl-desc">Place chicken chunks + veggie stir-fry in bowl. Add boiled sweet potato alongside. Halve the egg, place on side. Add 80g cold curd in small bowl on side. Sprinkle 10g pumpkin seeds + 8g ground flax over chicken. Squeeze lemon. Eat immediately — do not reheat.</div></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="sec-header"><div class="sec-num">2</div><div class="sec-label">Meal 2 — Nutrition Summary</div></div>
-            <div class="sum-grid">
-                <div class="sum-box"><div class="sv" style="color:#ff6b00">655</div><div class="sl">Total kcal</div><div class="sp">41% of daily</div></div>
-                <div class="sum-box"><div class="sv" style="color:#4ade80">~72g</div><div class="sl">Protein</div><div class="sp">55% of target</div></div>
-                <div class="sum-box"><div class="sv" style="color:#fbbf24">~52g</div><div class="sl">Carbs</div><div class="sp">Post-gym glycogen</div></div>
-                <div class="sum-box"><div class="sv" style="color:#f472b6">~18g</div><div class="sl">Fats</div><div class="sp">Lean + good</div></div>
-                <div class="sum-box"><div class="sv" style="color:#2dd4bf">~9g</div><div class="sl">Fibre</div><div class="sp">Overnight gut</div></div>
-            </div>
-            <div class="divider"></div>
-            <div class="card-title">Micronutrients Covered</div>
-            <div class="row2" style="gap:6px;font-size:12px">
-                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Complete protein all amino acids<br><span style="color:#4ade80">✓</span> Curcumin anti-inflammatory (turmeric)<br><span style="color:#4ade80">✓</span> Vit D (egg yolk)<br><span style="color:#4ade80">✓</span> Lutein + Zeaxanthin (egg, capsicum)<br><span style="color:#4ade80">✓</span> Beta-carotene / Vit A (sweet potato)<br><span style="color:#4ade80">✓</span> B12 (chicken, curd, egg)</div>
-                <div style="color:#777;line-height:2"><span style="color:#4ade80">✓</span> Zinc + testosterone (pumpkin seeds)<br><span style="color:#4ade80">✓</span> Omega-3 overnight repair (flax)<br><span style="color:#4ade80">✓</span> Casein → overnight muscle (curd)<br><span style="color:#4ade80">✓</span> Potassium muscle cramps (sweet potato)<br><span style="color:#4ade80">✓</span> Selenium (chicken, egg)<br><span style="color:#4ade80">✓</span> Tryptophan → sleep (pumpkin)</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                <div class="card-title" style="margin-bottom:0">Meal 2 Ingredient Tracker <span class="flash" id="fl_m2">✓ Saved</span></div>
-                <div style="font-size:11px;color:var(--text3)" id="m2_date_label"></div>
-            </div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap once = ✅ done &nbsp;|&nbsp; Tap again = ❌ missed &nbsp;|&nbsp; Tap again = reset</div>
-            <div class="tracker-outer" id="m2_wrap"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">📂 Past Meal 2 Data</div>
-            <div class="trk-ctrl">
-                <label>From <input type="date" id="m2_s" value="2025-04-27"></label>
-                <label>To <input type="date" id="m2_e" value="2025-05-27"></label>
-                <button class="btn btn-o btn-sm" onclick="buildM2Past()">Fetch</button>
-            </div>
-            <div class="tracker-outer" id="m2_past_wrap"></div>
-        </div>
-
-        <div class="card">
-            <div class="sec-header"><div class="sec-num">3</div><div class="sec-label">Ingredients · Quantity · Cooking · Nutrients</div></div>
-            <div class="table-wrap">
-                <table>
-                    <tr><th>Ingredient</th><th>Qty</th><th>Cal</th><th>How to Cook</th><th>Induction</th><th>Key Nutrients & Benefits</th></tr>
-                    <tr>
-                        <td><strong>Chicken Breast (chunks)</strong></td><td>180g</td><td>198</td>
-                        <td><span class="cook">Pan-fry marinated</span></td>
-                        <td><span class="temp">300W heat oil, 500W cook</span></td>
-                        <td>Complete protein (all 9 essential amino acids). B12 (nerve health, energy). Niacin B3 (skin repair). Selenium (thyroid, immunity). Zinc (testosterone). Phosphorus (bones). Lean — only 3g fat per 180g.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Whole Green Beans</strong></td><td>60g</td><td>20</td>
-                        <td><span class="cook">Pan-fry 4 min</span></td>
-                        <td><span class="temp">500W · 4 min · Pan-fry</span></td>
-                        <td>Fibre (overnight gut recovery), Vit C, Vit K, folate, iron. Pan-frying after chicken uses the flavoured oil — no extra oil needed.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Capsicum (red or yellow)</strong></td><td>60g</td><td>19</td>
-                        <td><span class="cook">Pan-fry 3 min</span></td>
-                        <td><span class="temp">500W · 3 min · Pan-fry</span></td>
-                        <td>Red/yellow capsicum = highest Vit C of all vegetables (190mg/100g). Vit A, lutein, zeaxanthin (eye health — directly supports myopia management). Carotenoids for skin.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Onion</strong></td><td>50g</td><td>20</td>
-                        <td><span class="cook">Pan-fry till golden</span></td>
-                        <td><span class="temp">500W · 5 min · Pan-fry</span></td>
-                        <td>Quercetin + sulphur. Chromium (blood sugar regulation post-meal). Prebiotic fibre. Caramelising brings out natural sweetness — makes the dish taste great without any sauce.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Broccoli</strong></td><td>80g</td><td>27</td>
-                        <td><span class="cook">Add last, stir 2 min</span></td>
-                        <td><span class="temp">500W · 2 min · Add last</span></td>
-                        <td>Sulforaphane (liver support). Vit C, K, calcium. Always add broccoli last in pan-fry — high heat for short time best preserves its nutrients.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Sweet Potato (boiled side)</strong></td><td>100g</td><td>86</td>
-                        <td><span class="cook">Boil separately</span></td>
-                        <td><span class="temp">800W · 12 min · Boil</span></td>
-                        <td>Complex carb — post-gym glycogen replenishment (muscles absorb it well in post-workout window). Beta-carotene → Vit A (skin + eye). Potassium (prevents muscle cramps). Fibre.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Egg (boiled side)</strong></td><td>1 whole · 50g</td><td>65</td>
-                        <td><span class="cook">Hard boil</span></td>
-                        <td><span class="temp">800W · 12 min · Boil</span></td>
-                        <td>Choline (brain function, memory consolidation during sleep). Lutein + zeaxanthin in yolk (eye health — specifically helps with -1.0 myopia management). Vit D, complete protein, selenium.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Curd (cold side)</strong></td><td>80g</td><td>62</td>
-                        <td><span class="cook">Raw, cold side</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>Probiotics (gut recovery post-gym). Casein protein (slow-digesting → prevents muscle breakdown overnight — critical for gains). Calcium, B12. Cools spice from chilli marinade.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Marinade</strong></td><td>Salt, ½ tsp chilli, ¼ tsp turmeric, 1 tbsp ginger-garlic paste, ½ lemon</td><td>~15</td>
-                        <td><span class="cook">Marinate 30 min+</span></td>
-                        <td><span class="temp">No heat for marinating</span></td>
-                        <td>Turmeric (curcumin → anti-inflammatory, reduces DOMS, joint health). Ginger (anti-inflammatory, digestion, muscle recovery). Garlic (allicin → heart, immunity). Lemon (Vit C, tenderises chicken for juicy chunks).</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Coconut Oil (for pan)</strong></td><td>1 tsp · 5ml</td><td>44</td>
-                        <td><span class="cook">Coat pan</span></td>
-                        <td><span class="temp">300W heat oil first</span></td>
-                        <td>MCTs (medium-chain fats → quick energy, thermogenic). Stable at high heat — does not oxidise like other oils. Lauric acid (antibacterial, antiviral). Supports testosterone production.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Pumpkin Seeds (on plated food)</strong></td><td>10g</td><td>55</td>
-                        <td><span class="cook">Raw, sprinkle after plating</span></td>
-                        <td><span class="temp">No heat · Raw</span></td>
-                        <td>Zinc (testosterone, skin, hair). Tryptophan → serotonin → melatonin (helps you fall asleep at 10:30 PM — pumpkin seeds at dinner is strategic). Mg (muscle relaxation, recovery).</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Flax Seeds ground (on plated food)</strong></td><td>8g</td><td>44</td>
-                        <td><span class="cook">Raw ground, sprinkle</span></td>
-                        <td><span class="temp">No heat · Raw ground</span></td>
-                        <td>ALA omega-3 (reduces post-gym inflammation overnight). Lignans (hormone balance). Fibre (overnight gut motility). Must be ground — sprinkle on food after plating.</td>
-                    </tr>
-                    <tr class="total-row"><td colspan="2"><strong>TOTAL MEAL 2</strong></td><td><strong>655</strong></td><td colspan="3">~41% of daily 1,600 kcal</td></tr>
-                </table>
-            </div>
-            <div class="note">Total: Meal 1 (725) + Meal 2 (655) + Pre-gym snack banana (89) + Green tea (0) = ~1,469 kcal. Slightly under 1,600 which is perfect for fat loss.</div>
-        </div>
-    </div>
-
-    <!-- ═══ GROCERY ═══ -->
-    <div id="sec_grocery" class="section">
-        <div class="info-o">Weekly items (onions, dry goods, eggs, paneer, curd) stay fresh 7 days. 3-day items (fresh chicken, capsicum, leafy veggies, tomato, broccoli) spoil faster — buy every 3 days. Lemons, coriander, banana buy every 2–3 days.</div>
-
-        <div class="card">
-            <div class="card-title">Grocery Date Range <span class="flash" id="fl_groc">✓ Saved</span></div>
-            <div class="trk-ctrl">
-                <label>From <input type="date" id="gr_s" value="2025-04-27"></label>
-                <label>To <input type="date" id="gr_e" value="2025-05-27"></label>
-                <button class="btn btn-o" onclick="buildGrocery()">Generate</button>
-                <button class="btn btn-w" onclick="if(confirm('Clear all grocery data?')){ls_clear('groc');buildGrocery()}">Clear All</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">📦 Weekly Restocking (every 7 days)</div>
-            <div class="tracker-outer" id="groc_weekly"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">🥬 3-Day Restocking (every 3 days — fresh items)</div>
-            <div class="tracker-outer" id="groc_3day"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">🍋 Every 2–3 Days (very fresh items)</div>
-            <div class="tracker-outer" id="groc_2day"></div>
-        </div>
-        <div class="card">
-            <div class="card-title">➕ Add Custom Grocery</div>
-            <div class="form-grid-3">
-                <div class="form-group"><label>Item Name</label><input class="fi" id="cg_name" placeholder="e.g. Mango"></div>
-                <div class="form-group"><label>Quantity</label><input class="fi" id="cg_qty" placeholder="e.g. 4 pieces"></div>
-                <div class="form-group"><label>Restock Every</label>
-                    <select class="fs" id="cg_freq">
-                        <option value="weekly">Weekly (7 days)</option>
-                        <option value="3day">3 Days</option>
-                        <option value="2day">2 Days</option>
+    <!-- ═══ RECIPES ═══ -->
+    <div id="sec_recipes" class="section">
+        <div class="card admin-only">
+            <div class="card-title">➕ Add New Recipe</div>
+            <div class="form-grid">
+                <div class="form-group"><label>Recipe Name</label><input class="fi" id="rec_name" placeholder="e.g. Chicken Stir Fry"></div>
+                <div class="form-group"><label>Category</label>
+                    <select class="fs" id="rec_cat">
+                        <option>Lunch</option><option>Dinner</option><option>Snack</option><option>Breakfast</option>
                     </select>
                 </div>
             </div>
-            <button class="btn btn-o btn-sm admin-only" onclick="addCustomGrocery()">Add to List</button>
-            <div id="custom_groc_list" style="margin-top:10px"></div>
+            <div class="form-group" style="margin-bottom:8px"><label>Total Calories (kcal)</label><input type="number" class="fi" id="rec_cal" placeholder="e.g. 650"></div>
+            <div class="form-group" style="margin-bottom:8px"><label>Nutrition Summary</label><input class="fi" id="rec_nutrition" placeholder="e.g. Protein ~45g · Carbs ~50g · Fat ~18g"></div>
+            <div class="form-group" style="margin-bottom:8px">
+                <label>Ingredients (one per line: "Chicken breast 180g")</label>
+                <textarea class="ft" id="rec_items" placeholder="Chicken breast 180g&#10;Broccoli 80g&#10;Capsicum 60g&#10;..." style="min-height:100px"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:8px">
+                <label>Prep Guide (one step per line)</label>
+                <textarea class="ft" id="rec_prep" placeholder="Step 1: Marinate chicken...&#10;Step 2: Heat pan at 500W..." style="min-height:120px"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:10px"><label>Notes / Tips</label><input class="fi" id="rec_notes" placeholder="e.g. Do NOT pour dressing before leaving home"></div>
+            <button class="btn btn-o" onclick="addRecipe()">+ Save Recipe</button>
+        </div>
+        <div class="card">
+            <div class="card-title">📖 View Recipe</div>
+            <div style="margin-bottom:12px">
+                <select class="fs view-ok" id="rec_select" onchange="showRecipe(this.value)">
+                    <option value="">— Select a recipe —</option>
+                </select>
+            </div>
+            <div id="rec_display"></div>
+        </div>
+    </div>
+
+    <!-- ═══ GROCERY & ESSENTIALS ═══ -->
+    <div id="sec_grocery" class="section">
+        <div class="info-o">Add all your items once. The tracker shows upcoming restock dates per frequency. Mark ✅ when bought.</div>
+
+        <div class="card admin-only">
+            <div class="card-title">➕ Add / Edit Item</div>
+            <div class="form-grid-3">
+                <div class="form-group"><label>Item Name</label><input class="fi" id="cg_name" placeholder="e.g. Broccoli, Shampoo"></div>
+                <div class="form-group"><label>Quantity / Note</label><input class="fi" id="cg_qty" placeholder="e.g. 300g, 1 bottle"></div>
+                <div class="form-group"><label>Category</label>
+                    <select class="fs" id="cg_cat">
+                        <option value="meal">🥗 Meal Grocery</option>
+                        <option value="essential">🧴 Daily Essential</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Restock Every</label>
+                    <select class="fs" id="cg_freq">
+                        <option value="daily">Every day</option>
+                        <option value="2day">Every 2–3 days</option>
+                        <option value="3day">Every 3 days</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Notes (optional)</label><input class="fi" id="cg_notes" placeholder="Brand, store, etc."></div>
+            </div>
+            <button class="btn btn-o btn-sm" onclick="addCustomGrocery()">Add to List</button>
+        </div>
+
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">🥗 Meal Groceries — Upcoming</div>
+                <div style="font-size:11px;color:var(--text3)" id="groc_week_label"></div>
+            </div>
+            <div class="tracker-outer" id="groc_meal_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">🧴 Daily Essentials — Upcoming</div>
+            </div>
+            <div class="tracker-outer" id="groc_ess_wrap"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📋 My Items <span class="flash" id="fl_groc">✓ Saved</span></div>
+            <div id="custom_groc_list"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📂 Fetch Past Grocery Data</div>
+            <div class="trk-ctrl">
+                <label>From <input type="date" id="gr_s"></label>
+                <label>To <input type="date" id="gr_e"></label>
+                <button class="btn btn-o btn-sm" onclick="buildGroceryPast()">Fetch</button>
+            </div>
+            <div style="margin-top:8px">
+                <input class="fi" id="groc_search" placeholder="🔍 Search items…" oninput="filterGroceryPast()" style="margin-bottom:10px">
+            </div>
+            <div style="margin-top:4px">
+                <div id="groc_past_meal"></div>
+                <div id="groc_past_ess" style="margin-top:10px"></div>
+            </div>
         </div>
     </div>
 
@@ -992,7 +800,14 @@
         </div>
 
         <div class="card">
-            <div class="card-title">Active Tasks</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">Active Tasks</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <label style="font-size:11px;color:var(--text3)">Show tasks due on or before:</label>
+                    <input type="date" class="fi" id="t_filter_date" style="width:auto;padding:5px 8px;font-size:12px" onchange="renderTasks()">
+                    <button class="btn btn-w btn-sm" onclick="document.getElementById('t_filter_date').value='';renderTasks()">Show All</button>
+                </div>
+            </div>
             <div class="table-wrap" id="tasks_active_wrap">
                 <table id="tasks_active_tbl">
                     <tr><th>Task</th><th>Category</th><th>Priority</th><th>Target Date</th><th>Days Left</th><th>Status</th><th>Notes</th><th>Actions</th></tr>
@@ -1052,30 +867,21 @@
         </div>
 
         <div class="card">
-            <div class="card-title">All Transactions</div>
-            <div class="table-wrap" id="exp_t1_wrap">
-                <table id="exp_t1">
-                    <tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Category</th><th>Type</th><th>Notes</th><th>Del</th></tr>
-                </table>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                <div class="card-title" style="margin-bottom:0">💳 All Transactions</div>
+                <input class="fi" id="exp_search" placeholder="🔍 Search…" oninput="renderExpenses()" style="width:180px;padding:5px 10px;font-size:12px">
             </div>
+            <div id="exp_t1_cards"></div>
         </div>
 
         <div class="card">
-            <div class="card-title">Daily Summary — Last 7 Days</div>
-            <div class="table-wrap">
-                <table id="exp_t2">
-                    <tr><th>Date</th><th>Needs</th><th>Wants</th><th>Desires</th><th>Total</th><th>Var Spent</th><th>vs Limit</th></tr>
-                </table>
-            </div>
+            <div class="card-title">📆 Daily Breakdown — Last 14 Days</div>
+            <div id="exp_daily_wrap"></div>
         </div>
 
         <div class="card">
-            <div class="card-title">Monthly Summary</span></div>
-            <div class="table-wrap">
-                <table id="exp_t3">
-                    <tr><th>Month</th><th>Needs ₹</th><th>Wants ₹</th><th>Desires ₹</th><th>Total ₹</th></tr>
-                </table>
-            </div>
+            <div class="card-title">📊 Monthly Summary</div>
+            <div id="exp_monthly_wrap"></div>
         </div>
         <div class="card">
             <div class="card-title">📂 Fetch Historical Expense Data</div>
@@ -1084,7 +890,10 @@
                 <label>To <input type="date" id="exp_hist_e"></label>
                 <button class="btn btn-o btn-sm" onclick="fetchExpenseHistory()">Fetch</button>
             </div>
-            <div id="exp_hist_result" style="margin-top:8px"></div>
+            <div style="margin-top:8px">
+                <input class="fi" id="exp_hist_search" placeholder="🔍 Search transactions…" oninput="filterExpenseHistory()" style="margin-bottom:8px">
+            </div>
+            <div id="exp_hist_result" style="margin-top:4px"></div>
         </div>
     </div>
 
@@ -1145,6 +954,30 @@
         </div>
     </div>
 
+<!-- ═══ JOURNAL ═══ -->
+    <div id="sec_journal" class="section">
+        <div class="card admin-only">
+            <div class="card-title">✍️ Today's Entry</div>
+            <div class="form-group" style="margin-bottom:10px">
+                <label>Date</label>
+                <input type="date" class="fi view-ok" id="jrn_date">
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+                <label>How did today go? (free write)</label>
+                <textarea class="ft" id="jrn_text" placeholder="Today I felt... I did... I want to improve..." style="min-height:120px"></textarea>
+            </div>
+            <div class="form-grid" style="margin-bottom:10px">
+                <div class="form-group"><label>Energy (1–10)</label><input type="number" class="fi" id="jrn_energy" min="1" max="10" placeholder="7"></div>
+                <div class="form-group"><label>Mood (1–10)</label><input type="number" class="fi" id="jrn_mood" min="1" max="10" placeholder="7"></div>
+            </div>
+            <button class="btn btn-o" onclick="saveJournalEntry()">Save Entry</button>
+        </div>
+        <div class="card">
+            <div class="card-title">📖 Past Entries</div>
+            <div id="jrn_entries"></div>
+        </div>
+    </div>
+
 </div><!-- end .content -->
 
 <!-- APP PROMPT MODAL (replaces native appPrompt()) -->
@@ -1186,7 +1019,7 @@
     <div class="auth-box">
         <div class="auth-logo">⚡</div>
         <div class="auth-title">Health & Life Dashboard</div>
-        <div class="auth-sub">Enter your GBC to continue.<br>Read-only access is available.</div>
+        <div class="auth-sub">Enter GBC to continue.<br>Read-only access is available.</div>
         <input class="auth-input" id="auth_input" type="password" placeholder="Access code" autocomplete="off">
         <div class="auth-err" id="auth_err"></div>
         <button class="btn btn-o" style="width:100%" onclick="tryAuth()">Enter</button>
@@ -1211,18 +1044,6 @@
     // ═══════════════════════════════════════
     // TAB SWITCHING — works on iOS Safari
     // ═══════════════════════════════════════
-    function showTab(name) {
-      var sections = document.querySelectorAll('.section');
-      for (var i = 0; i < sections.length; i++) sections[i].style.display = 'none';
-      var tabs = document.querySelectorAll('.tab');
-      for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-      var sec = document.getElementById('sec_' + name);
-      if (sec) sec.style.display = 'block';
-      var tab = document.getElementById('tab_' + name);
-      if (tab) tab.classList.add('active');
-      if (name === 'overview') { renderScores(); updateOverviewMetrics(); }
-    }
-
     // ═══════════════════════════════════════
     // LOCAL STORAGE HELPERS
     // ═══════════════════════════════════════
@@ -1260,8 +1081,11 @@
               try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
             });
           }
+          // Seed default recipes AFTER Firebase data is loaded — only if truly empty
+          seedDefaultRecipes();
           if (!_initDone) { _initDone = true; initDashboard(); }
         }).catch(function() {
+          seedDefaultRecipes();
           if (!_initDone) { _initDone = true; initDashboard(); }
         });
 
@@ -1282,6 +1106,10 @@
             if (Object.prototype.hasOwnProperty.call(data, k)) {
               try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
             } else {
+              // Key exists locally but not in Firebase — only remove if Firebase actually
+              // has other data (i.e. this is a real deletion, not just a key not yet synced)
+              // Don't remove locally-seeded data that hasn't been pushed yet
+              if (_pendingPush) return; // push in progress, don't touch local data
               try { localStorage.removeItem(k); } catch(e) {}
             }
           });
@@ -1293,11 +1121,13 @@
       }
     }
 
-    var SYNCED_KEYS = ['sched','m1','m2','groc_w','groc_3','groc_2',
+    var SYNCED_KEYS = ['sched','groc_meal','groc_ess',
       'tasks_active_list','tasks_done_list','expenses_list','exp_limits',
       'weight_log','theme','notif_dismissed','custom_groc',
       'habits_active','habits_done','shop_wishlist','shop_bought',
-      'health_targets','custom_sched_rows'];
+      'health_targets','custom_sched_rows','sched_base_edits',
+      'meal_log','meal_recipes','meal_tracker',
+      'journal_entries','water_log'];
 
     function schedulePush() {
       if (_syncTimer) clearTimeout(_syncTimer);
@@ -1322,32 +1152,45 @@
     }
 
     function reRenderAll() {
+      getAllSchedRowsSorted();
       buildSched();
-      buildM1();
-      buildM2();
       buildGrocery();
       renderTasks();
       renderExpenses();
-      renderWeight();
+      renderWeight();       // also calls renderWeightChart + updateOverviewMetrics
       renderLimits();
       renderScores();
+      renderWeeklyReport();
+      renderWater();
       renderCustomGrocery();
       renderCustomSchedList();
       renderHabits();
       renderShopping();
+      renderRecipeDropdown();
+      renderJournal();
     }
 
     function forceSyncFromFirebase() {
       var btn = document.getElementById('sync_btn');
       if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
-      if (!_fbRef) { alert('Not connected to Firebase.'); if (btn) { btn.textContent = '🔄'; btn.disabled = false; } return; }
-      _fbRef.once('value').then(function(snap) {
+      if (!_fbRef) {
+        alert('Not connected to Firebase.');
+        if (btn) { btn.textContent = '🔄'; btn.disabled = false; }
+        return;
+      }
+      // Step 1: Push local state up first (so no local data is lost)
+      var out = {};
+      SYNCED_KEYS.forEach(function(k) {
+        var raw = localStorage.getItem(k);
+        if (raw !== null) { try { out[k] = JSON.parse(raw); } catch(e) {} }
+      });
+      _fbRef.set(out).then(function() {
+        // Step 2: Pull back from Firebase (now authoritative)
+        return _fbRef.once('value');
+      }).then(function(snap) {
         var data = snap.val();
         if (data && typeof data === 'object') {
-          // Clear all synced keys first, then repopulate
-          SYNCED_KEYS.forEach(function(k) {
-            try { localStorage.removeItem(k); } catch(e) {}
-          });
+          SYNCED_KEYS.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
           Object.keys(data).forEach(function(k) {
             try { localStorage.setItem(k, JSON.stringify(data[k])); } catch(e) {}
           });
@@ -1355,12 +1198,35 @@
           if (btn) { btn.textContent = '✅'; setTimeout(function(){ btn.textContent='🔄'; btn.disabled=false; }, 1500); }
         } else {
           if (btn) { btn.textContent = '🔄'; btn.disabled = false; }
-          alert('Firebase is empty or unreachable.');
         }
       }).catch(function() {
         if (btn) { btn.textContent = '🔄'; btn.disabled = false; }
-        alert('Sync failed — check your internet connection.');
+        alert('Sync failed — check connection.');
       });
+    }
+
+    // ═══════════════════════════════════════
+    // TAB SWITCHING
+    // ═══════════════════════════════════════
+    function showTab(name) {
+      var sections = document.querySelectorAll('.section');
+      for (var i = 0; i < sections.length; i++) sections[i].style.display = 'none';
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+      var sec = document.getElementById('sec_' + name);
+      if (sec) sec.style.display = 'block';
+      var tab = document.getElementById('tab_' + name);
+      if (tab) tab.classList.add('active');
+      if (name === 'overview') { renderScores(); updateOverviewMetrics(); renderWeeklyReport(); renderWater(); }
+      if (name === 'grocery') { buildGrocery(); renderCustomGrocery(); }
+      if (name === 'recipes') { renderRecipeDropdown(); }
+      if (name === 'journal') { renderJournal(); }
+      if (name === 'habits') { renderHabits(); }
+      if (name === 'meallog') {
+        var mlDate = document.getElementById('ml_date');
+        if (mlDate && !mlDate.value) mlDate.value = isoD(new Date(Date.now()-86400000));
+        renderMealLog();
+      }
     }
 
     function ls_get(key) {
@@ -1413,10 +1279,19 @@
       return 'background:var(--bg3);box-shadow:none;border:1px solid var(--border)';
     }
 
-    var TODAY_ISO = isoD(new Date());
-    var YEST_ISO  = isoD(new Date(Date.now()-86400000));
+    // Computed fresh each time — app may be open across midnight
+    function getTodayISO() { return isoD(new Date()); }
+    function getYestISO()  { return isoD(new Date(Date.now()-86400000)); }
+    var TODAY_ISO = getTodayISO();
+    var YEST_ISO  = getYestISO();
+    // Refresh on each tracker build
+    function refreshDateConstants() {
+      TODAY_ISO = getTodayISO();
+      YEST_ISO  = getYestISO();
+    }
 
     function buildTrackerDates(wrapId, storeName, flashId, dates, rows) {
+      refreshDateConstants();
       var data = ls_get(storeName);
       var html = '<table class="trk"><thead><tr>';
       html += '<th class="s1">Time</th><th class="s2">Task / Item</th>';
@@ -1484,7 +1359,7 @@
     // ═══════════════════════════════════════
     // SCHEDULE TRACKER
     // ═══════════════════════════════════════
-    var SCHED_ROWS = [
+    var DEFAULT_SCHED_ROWS = [
       {time:'6:30 AM', task:'Wakeup'},
       {time:'6:30 AM', task:'Drink 500–800ml water'},
       {time:'7:00 AM', task:'Morning cardio 30–40 min'},
@@ -1498,9 +1373,38 @@
       {time:'8:00 PM', task:'Eat Meal 2'},
       {time:'10:30 PM', task:'Sleep by 10:30 PM'},
     ];
+
+    // Parse time string to minutes for sorting
+    function timeToMins(t) {
+      if (!t) return 9999;
+      var m = t.match(/(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+      if (!m) return 9999;
+      var h = parseInt(m[1]), min = parseInt(m[2]||0), ampm = (m[3]||'').toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      return h * 60 + min;
+    }
+
+    // Get base sched rows — defaults overridden by user edits stored in 'sched_base_edits'
+    function getBaseSchedRows() {
+      var edits = ls_get('sched_base_edits');
+      return DEFAULT_SCHED_ROWS.map(function(row, idx) {
+        return edits[idx] ? edits[idx] : row;
+      }).filter(function(r){ return r && !r.deleted; });
+    }
+
     function getCustomSchedRows() {
       var data = ls_get('custom_sched_rows');
       return Object.keys(data).sort().map(function(k){ return data[k]; });
+    }
+
+    // Merge base + custom, sort by time
+    var SCHED_ROWS = []; // kept for score count compatibility
+    function getAllSchedRowsSorted() {
+      var all = getBaseSchedRows().concat(getCustomSchedRows());
+      all.sort(function(a,b){ return timeToMins(a.time) - timeToMins(b.time); });
+      SCHED_ROWS = all; // keep in sync for scoreForTracker
+      return all;
     }
 
     function addCustomSchedRow() {
@@ -1525,28 +1429,137 @@
       buildSched();
     }
 
-    function renderCustomSchedList() {
-      var data = ls_get('custom_sched_rows');
-      var keys = Object.keys(data);
-      var el = document.getElementById('custom_sched_list');
+    // Render the daily routine timeline dynamically from current rows
+    function renderDailyRoutine() {
+      var el = document.getElementById('daily_routine_tl');
       if (!el) return;
-      if (keys.length === 0) { el.innerHTML = ''; return; }
-      var html = '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Custom entries:</div>';
-      keys.forEach(function(id) {
-        var r = data[id];
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
-        html += '<span style="flex:1;color:var(--text1);font-size:13px"><strong style="color:var(--accent)">' + esc(r.time) + '</strong> — ' + esc(r.task) + '</span>';
-        html += '<button class="btn btn-r btn-sm" onclick="deleteCustomSchedRow(\'' + id + '\')">✕</button>';
+      var rows = getAllSchedRowsSorted();
+      var html = '';
+      rows.forEach(function(r, idx) {
+        html += '<div class="tl-item">';
+        html += '<div class="tl-time">' + esc(r.time) + (r.time && r.task ? ' — ' : '') + esc(r.task) + '</div>';
+        if (r.desc) html += '<div class="tl-desc">' + esc(r.desc) + '</div>';
         html += '</div>';
       });
       el.innerHTML = html;
     }
 
-    function getAllSchedRows() {
-      return SCHED_ROWS.concat(getCustomSchedRows());
+    function renderCustomSchedList() {
+      var el = document.getElementById('custom_sched_list');
+      if (!el) return;
+
+      // Section 1: edit base entries
+      var base = getBaseSchedRows();
+      var edits = ls_get('sched_base_edits');
+      var html = '';
+      if (_authRole !== 'readonly') {
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Edit Built-in Entries</div>';
+        DEFAULT_SCHED_ROWS.forEach(function(row, idx) {
+          var cur = edits[idx] || row;
+          if (cur.deleted) return;
+          html += '<div style="padding:6px 0;border-bottom:0.5px solid var(--border)">';
+          html += '<div style="display:flex;align-items:center;gap:8px">';
+          html += '<span style="flex:1;font-size:12px;color:var(--text2)"><strong style="color:var(--accent)">' + esc(cur.time) + '</strong> — ' + esc(cur.task) + '</span>';
+          html += '<button class="btn btn-w btn-sm" style="font-size:10px" onclick="editBaseSchedRow(' + idx + ')">✏️</button>';
+          html += '<button class="btn btn-r btn-sm" style="font-size:10px" onclick="deleteBaseSchedRow(' + idx + ')">✕</button>';
+          html += '</div>';
+          html += '<div id="bsr_edit_' + idx + '" style="display:none;margin-top:6px" class="form-grid">';
+          html += '<div class="form-group"><label>Time</label><input class="fi" id="bsr_t_' + idx + '" value="' + esc(cur.time) + '" style="font-size:12px;padding:6px"></div>';
+          html += '<div class="form-group"><label>Task</label><input class="fi" id="bsr_k_' + idx + '" value="' + esc(cur.task) + '" style="font-size:12px;padding:6px"></div>';
+          html += '</div>';
+          html += '<div id="bsr_btns_' + idx + '" style="display:none;gap:6px;margin-top:4px">';
+          html += '<button class="btn btn-o btn-sm" onclick="saveBaseSchedRow(' + idx + ')">Save</button>';
+          html += '<button class="btn btn-w btn-sm" onclick="cancelBaseSchedEdit(' + idx + ')">Cancel</button>';
+          html += '</div></div>';
+        });
+        // Reset link
+        html += '<button class="btn btn-w btn-sm" style="margin-top:8px;font-size:10px" onclick="if(confirm(\'Reset all edits to default?\')){ls_set(\'sched_base_edits\',{});renderCustomSchedList();buildSched()}">↩ Reset to defaults</button>';
+        html += '<div class="divider"></div>';
+      }
+
+      // Section 2: custom added entries
+      var custom = ls_get('custom_sched_rows');
+      var ckeys = Object.keys(custom).sort();
+      if (ckeys.length > 0) {
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;margin-top:8px">Custom Entries</div>';
+        ckeys.forEach(function(id) {
+          var r = custom[id];
+          html += '<div id="csr_' + id + '" style="padding:6px 0;border-bottom:0.5px solid var(--border)">';
+          html += '<div style="display:flex;align-items:center;gap:8px">';
+          html += '<span style="flex:1;font-size:12px;color:var(--text1)"><strong style="color:var(--accent)">' + esc(r.time) + '</strong> — ' + esc(r.task) + '</span>';
+          html += '<button class="btn btn-w btn-sm admin-only" style="font-size:10px" onclick="editCustomSchedRow(\'' + id + '\')">✏️</button>';
+          html += '<button class="btn btn-r btn-sm admin-only" onclick="deleteCustomSchedRow(\'' + id + '\')">✕</button>';
+          html += '</div>';
+          html += '<div id="csr_edit_' + id + '" style="display:none;margin-top:6px" class="form-grid">';
+          html += '<div class="form-group"><label>Time</label><input class="fi" id="csr_t_' + id + '" value="' + esc(r.time) + '" style="font-size:12px;padding:6px"></div>';
+          html += '<div class="form-group"><label>Task</label><input class="fi" id="csr_k_' + id + '" value="' + esc(r.task) + '" style="font-size:12px;padding:6px"></div>';
+          html += '</div>';
+          html += '<div id="csr_btns_' + id + '" style="display:none;gap:6px;margin-top:4px">';
+          html += '<button class="btn btn-o btn-sm" onclick="saveCustomSchedRow(\'' + id + '\')">Save</button>';
+          html += '<button class="btn btn-w btn-sm" onclick="cancelEditSched(\'' + id + '\')">Cancel</button>';
+          html += '</div></div>';
+        });
+      }
+      el.innerHTML = html || '<div style="font-size:12px;color:var(--text3)">No custom entries yet.</div>';
     }
 
-    function buildSched() { build3Day('sched_wrap','sched','fl_sched',getAllSchedRows()); }
+    function editBaseSchedRow(idx) {
+      document.getElementById('bsr_edit_' + idx).style.display = 'grid';
+      document.getElementById('bsr_btns_' + idx).style.display = 'flex';
+    }
+    function cancelBaseSchedEdit(idx) {
+      document.getElementById('bsr_edit_' + idx).style.display = 'none';
+      document.getElementById('bsr_btns_' + idx).style.display = 'none';
+    }
+    function saveBaseSchedRow(idx) {
+      var time = document.getElementById('bsr_t_' + idx).value.trim();
+      var task = document.getElementById('bsr_k_' + idx).value.trim();
+      if (!task) { alert('Task cannot be empty.'); return; }
+      var edits = ls_get('sched_base_edits');
+      edits[idx] = {time: time || DEFAULT_SCHED_ROWS[idx].time, task: task, desc: DEFAULT_SCHED_ROWS[idx].desc || ''};
+      ls_set('sched_base_edits', edits);
+      cancelBaseSchedEdit(idx);
+      renderCustomSchedList();
+      buildSched();
+    }
+    function deleteBaseSchedRow(idx) {
+      if (!confirm('Remove this entry from tracker?')) return;
+      var edits = ls_get('sched_base_edits');
+      edits[idx] = {deleted: true};
+      ls_set('sched_base_edits', edits);
+      renderCustomSchedList();
+      buildSched();
+    }
+
+    function editCustomSchedRow(id) {
+      document.getElementById('csr_edit_' + id).style.display = 'grid';
+      document.getElementById('csr_btns_' + id).style.display = 'flex';
+    }
+
+    function cancelEditSched(id) {
+      document.getElementById('csr_edit_' + id).style.display = 'none';
+      document.getElementById('csr_btns_' + id).style.display = 'none';
+    }
+
+    function saveCustomSchedRow(id) {
+      var time = document.getElementById('csr_t_' + id).value.trim();
+      var task = document.getElementById('csr_k_' + id).value.trim();
+      if (!task) { alert('Task cannot be empty.'); return; }
+      var data = ls_get('custom_sched_rows');
+      if (!data[id]) return;
+      data[id].time = time || 'Custom';
+      data[id].task = task;
+      ls_set('custom_sched_rows', data);
+      renderCustomSchedList();
+      buildSched();
+    }
+    function getAllSchedRows() { return getAllSchedRowsSorted(); }
+
+    function buildSched() {
+      getAllSchedRowsSorted(); // update SCHED_ROWS
+      build3Day('sched_wrap','sched','fl_sched',SCHED_ROWS);
+      if (typeof renderDailyRoutine === 'function') renderDailyRoutine();
+    }
     function buildSchedPast() { buildTracker('sched_past_wrap','sched','fl_sched','sd_s','sd_e',getAllSchedRows()); }
 
 
@@ -1569,8 +1582,8 @@
       {time:'Meal 1', task:'Sunflower seeds 10g — raw'},
       {time:'Dressing', task:'Paneer 40g + Curd 30g + Garlic + Chilli + Coriander + Lemon'},
     ];
-    function buildM1() { build3Day('m1_wrap','m1','fl_m1',M1_ROWS); }
-    function buildM1Past() { buildTracker('m1_past_wrap','m1','fl_m1','m1_s','m1_e',M1_ROWS); }
+    function buildM1() { /* legacy — meal log tab now handles this */ }
+    function buildM1Past() {}
 
 
     // ═══════════════════════════════════════
@@ -1589,8 +1602,8 @@
       {time:'Meal 2', task:'Flax seeds 8g ground — sprinkle'},
       {time:'Marinade', task:'Turmeric + Ginger-garlic + Chilli + Lemon'},
     ];
-    function buildM2() { build3Day('m2_wrap','m2','fl_m2',M2_ROWS); }
-    function buildM2Past() { buildTracker('m2_past_wrap','m2','fl_m2','m2_s','m2_e',M2_ROWS); }
+    function buildM2() { /* legacy — meal log tab now handles this */ }
+    function buildM2Past() {}
 
 
     // ═══════════════════════════════════════
@@ -1745,6 +1758,17 @@
         var pb = {High:0,Medium:1,Low:2}[tasks[b].pri] || 1;
         return pa - pb;
       });
+      var isRO = _authRole === 'readonly';
+      var filterDate = (document.getElementById('t_filter_date') || {}).value || '';
+      var today = isoD(new Date());
+      // Apply filter: if date selected, show tasks with no date OR date <= filterDate; always show overdue
+      if (filterDate) {
+        keys = keys.filter(function(id) {
+          var t = tasks[id];
+          if (!t.date) return true; // tasks with no date always show
+          return t.date <= filterDate;
+        });
+      }
       var html = '<tr><th>Task</th><th>Category</th><th>Priority</th><th>Target Date</th><th>Days Left</th><th>Status</th><th>Notes</th><th>Actions</th></tr>';
       if (keys.length === 0) {
         html += '<tr><td colspan="8" style="text-align:center;color:#444;padding:20px">No active tasks — add one above</td></tr>';
@@ -1758,18 +1782,23 @@
           '<span class="dok">' + dl + ' days</span>';
         var priCls = {High:'ph',Medium:'pm',Low:'pl'}[t.pri] || 'pm';
         var stCls = {Todo:'st-todo','In Progress':'st-prog',Blocked:'br'}[t.status] || 'st-todo';
-        html += '<tr>';
+        html += '<tr' + (dl !== null && dl < 0 ? ' style="background:rgba(255,59,48,0.08);border-left:3px solid var(--red)"' : '') + '>';
         html += '<td style="color:#e0e0e0;font-weight:600">' + esc(t.name) + '</td>';
         html += '<td><span class="badge bw">' + esc(t.cat) + '</span></td>';
         html += '<td class="' + priCls + '">' + t.pri + '</td>';
         html += '<td style="color:#888">' + (t.date || '—') + '</td>';
         html += '<td>' + dlHtml + '</td>';
-        html += '<td><span class="' + stCls + '" style="cursor:pointer" onclick="changeStatus(\'' + id + '\')">' + (t.status||'Todo') + ' ↻</span></td>';
+        var statusClick = isRO ? '' : ' style="cursor:pointer" onclick="changeStatus(\'' + id + '\')"';
+        html += '<td><span class="' + stCls + '"' + statusClick + '>' + (t.status||'Todo') + (isRO ? '' : ' ↻') + '</span></td>';
         html += '<td style="color:#555;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis">' + esc(t.notes||'') + '</td>';
         html += '<td style="white-space:nowrap">';
-        html += '<button class="btn btn-g btn-sm" onclick="completeTask(\'' + id + '\')">✓</button> ';
-        html += '<button class="btn btn-w btn-sm" onclick="showNotifOptions(\'' + id + '\')">🔔</button> ';
-        html += '<button class="btn btn-r btn-sm" onclick="deleteTask(\'' + id + '\')">✕</button>';
+        if (!isRO) {
+          html += '<button class="btn btn-g btn-sm" onclick="completeTask(\'' + id + '\')">✓</button> ';
+          html += '<button class="btn btn-w btn-sm" onclick="showNotifOptions(\'' + id + '\')">🔔</button> ';
+          html += '<button class="btn btn-r btn-sm" onclick="deleteTask(\'' + id + '\')">✕</button>';
+        } else {
+          html += '<span style="font-size:10px;color:var(--text3)">View only</span>';
+        }
         html += '</td></tr>';
       });
       tbl.innerHTML = html;
@@ -1834,34 +1863,54 @@
     function renderExpenses() {
       var expenses = getExpenses();
       var today = isoD(new Date());
-      var yest = isoD(new Date(Date.now()-86400000));
+      var q = ((document.getElementById('exp_search') || {}).value || '').toLowerCase();
       var keys = Object.keys(expenses).sort(function(a,b) {
         return expenses[b].date.localeCompare(expenses[a].date);
       });
 
-      // Table 1 — Today + Yesterday only
-      var t1 = document.getElementById('exp_t1');
-      var todayYestKeys = keys.filter(function(id){ return expenses[id].date === today || expenses[id].date === yest; });
-      var html1 = '<tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Category</th><th>Type</th><th>Notes</th><th></th></tr>';
-      if (todayYestKeys.length === 0) {
-        html1 += '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px">No transactions today or yesterday</td></tr>';
-      }
-      todayYestKeys.forEach(function(id) {
-        var e = expenses[id];
-        var tcls = {Need:'t-need',Want:'t-want',Desire:'t-desire'}[e.type] || '';
-        html1 += '<tr>';
-        html1 += '<td style="color:var(--text3);white-space:nowrap">' + e.date + '</td>';
-        html1 += '<td style="color:var(--text1);font-weight:500">' + esc(e.desc) + '</td>';
-        html1 += '<td class="amt">₹' + Number(e.amt).toLocaleString('en-IN') + '</td>';
-        html1 += '<td class="' + tcls + '">' + e.type + '</td>';
-        html1 += '<td style="color:' + (e.vartype==='Fixed'?'var(--purple)':'var(--yellow)') + ';font-size:11px">' + (e.vartype||'Variable') + '</td>';
-        html1 += '<td style="color:var(--text3);font-size:11px">' + esc(e.notes||'') + '</td>';
-        html1 += '<td style="text-align:right"><button class="btn btn-r btn-sm" style="padding:4px 8px" onclick="deleteExpense(\'' + id + '\')">✕</button></td>';
-        html1 += '</tr>';
-      });
-      if (t1) t1.innerHTML = html1;
+      // ── All Transactions (card-per-row, searchable) ──
+      var t1el = document.getElementById('exp_t1_cards');
+      var filteredKeys = q
+        ? keys.filter(function(id){
+            var e = expenses[id];
+            return (e.desc||'').toLowerCase().indexOf(q) !== -1
+              || (e.notes||'').toLowerCase().indexOf(q) !== -1
+              || (e.type||'').toLowerCase().indexOf(q) !== -1
+              || (e.date||'').indexOf(q) !== -1;
+          })
+        : keys;
 
-      // Build daily + monthly aggregates from ALL data
+      if (t1el) {
+        if (filteredKeys.length === 0) {
+          t1el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">' + (q ? 'No results for "' + esc(q) + '"' : 'No transactions yet') + '</div>';
+        } else {
+          var cHtml = '';
+          filteredKeys.forEach(function(id) {
+            var e = expenses[id];
+            var clr = {Need:'var(--green)',Want:'var(--yellow)',Desire:'var(--purple)'}[e.type] || 'var(--text3)';
+            var isToday = e.date === today;
+            cHtml += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border2)">';
+            cHtml += '<div style="text-align:center;min-width:38px">';
+            cHtml += '<div style="font-size:10px;font-weight:700;color:var(--accent)">' + fmtD(new Date(e.date + 'T00:00:00')) + '</div>';
+            if (isToday) cHtml += '<div style="font-size:9px;color:var(--accent)">Today</div>';
+            cHtml += '</div>';
+            cHtml += '<div style="flex:1;min-width:0">';
+            cHtml += '<div style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.desc) + '</div>';
+            if (e.notes) cHtml += '<div style="font-size:11px;color:var(--text3)">' + esc(e.notes) + '</div>';
+            cHtml += '</div>';
+            cHtml += '<div style="text-align:right;flex-shrink:0">';
+            cHtml += '<div style="font-size:14px;font-weight:700;color:var(--text1)">₹' + Number(e.amt).toLocaleString('en-IN') + '</div>';
+            cHtml += '<div style="font-size:10px;color:' + clr + '">' + e.type + ' · ' + (e.vartype||'Var') + '</div>';
+            cHtml += '</div>';
+            var isRO = _authRole === 'readonly';
+            if (!isRO) cHtml += '<button class="btn btn-r btn-sm" style="padding:4px 8px;flex-shrink:0" onclick="deleteExpense(\'' + id + '\')">✕</button>';
+            cHtml += '</div>';
+          });
+          t1el.innerHTML = cHtml;
+        }
+      }
+
+      // ── Build aggregates ──
       var daily = {}, monthly = {};
       keys.forEach(function(id) {
         var e = expenses[id];
@@ -1869,67 +1918,173 @@
         daily[e.date][e.type] = (daily[e.date][e.type]||0) + Number(e.amt);
         if (e.vartype !== 'Fixed') daily[e.date].varTotal += Number(e.amt);
         var month = e.date.slice(0,7);
-        if (!monthly[month]) monthly[month] = {Need:0,Want:0,Desire:0};
+        if (!monthly[month]) monthly[month] = {Need:0,Want:0,Desire:0,total:0};
         monthly[month][e.type] = (monthly[month][e.type]||0) + Number(e.amt);
+        monthly[month].total   = (monthly[month].total||0) + Number(e.amt);
       });
 
-      // Table 2 — Last 7 days + diff columns
+      // ── Daily Breakdown — last 14 days ──
       var limits = ls_get('exp_limits');
-      var t2 = document.getElementById('exp_t2');
-      var last7 = [];
-      for (var i = 0; i < 7; i++) {
-        var dd = new Date(Date.now() - i * 86400000);
-        last7.push(isoD(dd));
-      }
-      var html2 = '<tr><th>Date</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th><th>Var Spent</th><th>vs Limit</th></tr>';
-      var has2 = false;
-      last7.forEach(function(d) {
-        if (!daily[d]) return;
-        has2 = true;
-        var row = daily[d];
-        var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
-        var varSpent = row.varTotal || 0;
-        var curM = d.slice(0,7);
-        var dayLim = limits[curM] ? parseFloat(limits[curM]) : null;
-        var diffHtml = '—';
-        if (dayLim) {
-          var diff = varSpent - dayLim;
-          var pct = Math.round(varSpent / dayLim * 100);
-          var clr = diff > 0 ? 'var(--red)' : 'var(--green)';
-          diffHtml = '<span style="color:' + clr + ';font-weight:700">' + (diff > 0 ? '+' : '') + '₹' + Math.round(Math.abs(diff)).toLocaleString('en-IN') + ' (' + pct + '%)</span>';
+      var dailyEl = document.getElementById('exp_daily_wrap');
+      if (dailyEl) {
+        var last14 = [];
+        for (var i = 0; i < 14; i++) {
+          var dd = new Date(Date.now() - i * 86400000);
+          last14.push(isoD(dd));
         }
-        html2 += '<tr>';
-        html2 += '<td style="color:var(--text3);white-space:nowrap">' + d + '</td>';
-        html2 += '<td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td>';
-        html2 += '<td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td>';
-        html2 += '<td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td>';
-        html2 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td>';
-        html2 += '<td style="color:var(--yellow)">₹' + varSpent.toLocaleString('en-IN') + '</td>';
-        html2 += '<td>' + diffHtml + '</td>';
-        html2 += '</tr>';
-      });
-      if (!has2) html2 += '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:14px">No data in last 7 days</td></tr>';
-      if (t2) t2.innerHTML = html2;
+        var dHtml = '';
+        var hasAny = false;
+        last14.forEach(function(d) {
+          if (!daily[d]) return;
+          hasAny = true;
+          var row = daily[d];
+          var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
+          var varSpent = row.varTotal || 0;
+          var curM = d.slice(0,7);
+          var dayLim = limits[curM] ? parseFloat(limits[curM]) : null;
+          var pct = dayLim ? Math.min(Math.round(varSpent / dayLim * 100), 100) : 0;
+          var barClr = !dayLim ? 'var(--blue)' : varSpent > dayLim ? 'var(--red)' : 'var(--green)';
+          var isToday = d === today;
+          dHtml += '<div style="padding:8px 0;border-bottom:0.5px solid var(--border2)">';
+          dHtml += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+          dHtml += '<span style="font-size:12px;font-weight:' + (isToday?'700':'500') + ';color:' + (isToday?'var(--accent)':'var(--text2)') + '">' + d + (isToday?' (Today)':'') + '</span>';
+          dHtml += '<span style="font-size:13px;font-weight:700;color:var(--text1)">₹' + total.toLocaleString('en-IN') + '</span>';
+          dHtml += '</div>';
+          dHtml += '<div style="display:flex;gap:8px;font-size:11px;margin-bottom:5px">';
+          dHtml += '<span class="t-need">N ₹' + (row.Need||0).toLocaleString('en-IN') + '</span>';
+          dHtml += '<span class="t-want">W ₹' + (row.Want||0).toLocaleString('en-IN') + '</span>';
+          dHtml += '<span class="t-desire">D ₹' + (row.Desire||0).toLocaleString('en-IN') + '</span>';
+          if (dayLim) dHtml += '<span style="color:var(--text3);margin-left:auto">Var ₹' + varSpent.toLocaleString('en-IN') + ' / ₹' + dayLim.toLocaleString('en-IN') + ' limit</span>';
+          dHtml += '</div>';
+          if (dayLim) {
+            dHtml += '<div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">';
+            dHtml += '<div style="height:100%;width:' + pct + '%;background:' + barClr + ';border-radius:2px;transition:width .3s"></div></div>';
+          }
+          dHtml += '</div>';
+        });
+        if (!hasAny) dHtml = '<div style="font-size:12px;color:var(--text3);padding:14px;text-align:center">No data in last 14 days</div>';
+        dailyEl.innerHTML = dHtml;
+      }
 
-      // Table 3 — Monthly summary
-      var t3 = document.getElementById('exp_t3');
-      var mkeys = Object.keys(monthly).sort(function(a,b) { return b.localeCompare(a); });
-      var html3 = '<tr><th>Month</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th></tr>';
-      if (mkeys.length === 0) html3 += '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:14px">No data yet</td></tr>';
-      mkeys.forEach(function(m) {
-        var row = monthly[m];
-        var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
-        var mLabel = new Date(m + '-01').toLocaleDateString('en-IN', {month:'long',year:'numeric'});
-        html3 += '<tr><td style="font-weight:600;color:var(--text1)">' + mLabel + '</td>';
-        html3 += '<td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td>';
-        html3 += '<td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td>';
-        html3 += '<td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td>';
-        html3 += '<td class="amt">₹' + total.toLocaleString('en-IN') + '</td></tr>';
-      });
-      if (t3) t3.innerHTML = html3;
+      // ── Monthly Summary ──
+      var monthlyEl = document.getElementById('exp_monthly_wrap');
+      if (monthlyEl) {
+        var mkeys = Object.keys(monthly).sort(function(a,b){ return b.localeCompare(a); });
+        if (mkeys.length === 0) {
+          monthlyEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:14px;text-align:center">No data yet</div>';
+        } else {
+          var maxTotal = Math.max.apply(null, mkeys.map(function(m){ return monthly[m].total; }));
+          var mHtml = '';
+          mkeys.forEach(function(m) {
+            var row = monthly[m];
+            var mLabel = new Date(m + '-01').toLocaleDateString('en-IN', {month:'short', year:'numeric'});
+            var barW = maxTotal > 0 ? Math.round(row.total / maxTotal * 100) : 0;
+            var isCurrentMonth = m === today.slice(0,7);
+            mHtml += '<div style="padding:8px 0;border-bottom:0.5px solid var(--border2)">';
+            mHtml += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+            mHtml += '<span style="font-size:12px;font-weight:' + (isCurrentMonth?'700':'500') + ';color:' + (isCurrentMonth?'var(--accent)':'var(--text1)') + '">' + mLabel + (isCurrentMonth?' (Current)':'') + '</span>';
+            mHtml += '<span style="font-size:14px;font-weight:700;color:var(--text1)">₹' + row.total.toLocaleString('en-IN') + '</span>';
+            mHtml += '</div>';
+            mHtml += '<div style="display:flex;gap:10px;font-size:11px;margin-bottom:5px">';
+            mHtml += '<span class="t-need">Needs ₹' + (row.Need||0).toLocaleString('en-IN') + '</span>';
+            mHtml += '<span class="t-want">Wants ₹' + (row.Want||0).toLocaleString('en-IN') + '</span>';
+            mHtml += '<span class="t-desire">Desires ₹' + (row.Desire||0).toLocaleString('en-IN') + '</span>';
+            mHtml += '</div>';
+            mHtml += '<div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden">';
+            mHtml += '<div style="height:100%;width:' + barW + '%;background:var(--accent);border-radius:3px"></div></div>';
+            mHtml += '</div>';
+          });
+          monthlyEl.innerHTML = mHtml;
+        }
+      }
     }
 
     // Historical fetch for expenses
+    var _lastExpHistData = null;
+
+    function filterExpenseHistory() {
+      if (!_lastExpHistData) return;
+      var q = (document.getElementById('exp_hist_search').value || '').toLowerCase();
+      renderExpHistFiltered(_lastExpHistData, q);
+    }
+
+    function renderExpHistFiltered(data, q) {
+      var expenses = data.expenses, limits = data.limits, s = data.s, e = data.e;
+      var allKeys = data.keys;
+      var keys = q
+        ? allKeys.filter(function(id){
+            var ex = expenses[id];
+            return (ex.desc||'').toLowerCase().indexOf(q) !== -1
+              || (ex.notes||'').toLowerCase().indexOf(q) !== -1
+              || (ex.type||'').toLowerCase().indexOf(q) !== -1
+              || (ex.date||'').indexOf(q) !== -1;
+          })
+        : allKeys;
+
+      var html = '<div style="font-size:11px;color:var(--text3);margin-bottom:10px">' + keys.length + ' transaction' + (keys.length!==1?'s':'') + (q?' matching "' + esc(q) + '"':'') + ' · ' + s + ' → ' + e + '</div>';
+
+      // Transaction cards
+      if (keys.length === 0) {
+        html += '<div style="color:var(--text3);font-size:12px;text-align:center;padding:14px">No transactions found.</div>';
+      } else {
+        keys.forEach(function(id){
+          var ex = expenses[id];
+          var clr = {Need:'var(--green)',Want:'var(--yellow)',Desire:'var(--purple)'}[ex.type]||'var(--text3)';
+          html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border2)">';
+          html += '<div style="min-width:50px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--accent)">' + fmtD(new Date(ex.date+'T00:00:00')) + '</div></div>';
+          html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(ex.desc) + '</div>';
+          if (ex.notes) html += '<div style="font-size:11px;color:var(--text3)">' + esc(ex.notes) + '</div>';
+          html += '</div>';
+          html += '<div style="text-align:right;flex-shrink:0"><div style="font-weight:700;color:var(--text1)">₹' + Number(ex.amt).toLocaleString('en-IN') + '</div>';
+          html += '<div style="font-size:10px;color:' + clr + '">' + ex.type + '</div></div>';
+          html += '</div>';
+        });
+      }
+
+      // Daily summary for filtered keys
+      var daily = {};
+      keys.forEach(function(id){
+        var ex = expenses[id];
+        if (!daily[ex.date]) daily[ex.date] = {Need:0,Want:0,Desire:0,varTotal:0};
+        daily[ex.date][ex.type] = (daily[ex.date][ex.type]||0) + Number(ex.amt);
+        if (ex.vartype !== 'Fixed') daily[ex.date].varTotal += Number(ex.amt);
+      });
+      var dkeys = Object.keys(daily).sort(function(a,b){ return b.localeCompare(a); });
+      if (dkeys.length > 0 && !q) {
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:14px 0 8px">Daily Summary</div>';
+        dkeys.forEach(function(d){
+          var row = daily[d];
+          var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
+          var dayLim = limits[d.slice(0,7)] ? parseFloat(limits[d.slice(0,7)]) : null;
+          var diff = dayLim ? (row.varTotal - dayLim) : null;
+          var diffStr = diff === null ? '' : ' · <span style="color:' + (diff>0?'var(--red)':'var(--green)') + ';font-weight:700">' + (diff>0?'+':'') + '₹' + Math.abs(Math.round(diff)).toLocaleString('en-IN') + ' vs limit</span>';
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border2)">';
+          html += '<div><span style="font-size:12px;color:var(--text2)">' + d + '</span><span style="font-size:11px;color:var(--text3);margin-left:8px"><span class="t-need">N₹' + (row.Need||0).toLocaleString('en-IN') + '</span> <span class="t-want">W₹' + (row.Want||0).toLocaleString('en-IN') + '</span> <span class="t-desire">D₹' + (row.Desire||0).toLocaleString('en-IN') + '</span>' + diffStr + '</span></div>';
+          html += '<span style="font-weight:700;color:var(--text1)">₹' + total.toLocaleString('en-IN') + '</span>';
+          html += '</div>';
+        });
+      }
+
+      // Monthly summary (unfiltered only)
+      if (!q) {
+        var monthly2 = {};
+        allKeys.forEach(function(id){ var ex = expenses[id]; var m = ex.date.slice(0,7); if (!monthly2[m]) monthly2[m] = {Need:0,Want:0,Desire:0,total:0}; monthly2[m][ex.type] = (monthly2[m][ex.type]||0) + Number(ex.amt); monthly2[m].total += Number(ex.amt); });
+        var mkeys2 = Object.keys(monthly2).sort(function(a,b){ return b.localeCompare(a); });
+        if (mkeys2.length > 0) {
+          html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:14px 0 8px">Monthly Summary</div>';
+          mkeys2.forEach(function(m){
+            var row = monthly2[m];
+            var ml = new Date(m+'-01').toLocaleDateString('en-IN',{month:'short',year:'numeric'});
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border2)">';
+            html += '<div><span style="font-size:12px;font-weight:600;color:var(--text1)">' + ml + '</span><span style="font-size:11px;color:var(--text3);margin-left:8px"><span class="t-need">N₹' + (row.Need||0).toLocaleString('en-IN') + '</span> <span class="t-want">W₹' + (row.Want||0).toLocaleString('en-IN') + '</span> <span class="t-desire">D₹' + (row.Desire||0).toLocaleString('en-IN') + '</span></span></div>';
+            html += '<span style="font-weight:700;color:var(--text1)">₹' + row.total.toLocaleString('en-IN') + '</span>';
+            html += '</div>';
+          });
+        }
+      }
+      document.getElementById('exp_hist_result').innerHTML = html;
+    }
+
     function fetchExpenseHistory() {
       var s = document.getElementById('exp_hist_s').value;
       var e = document.getElementById('exp_hist_e').value;
@@ -1938,56 +2093,9 @@
       var limits = ls_get('exp_limits');
       var keys = Object.keys(expenses).filter(function(id){ return expenses[id].date >= s && expenses[id].date <= e; });
       keys.sort(function(a,b){ return expenses[b].date.localeCompare(expenses[a].date); });
-
-      // Transactions
-      var html = '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">All Transactions (' + s + ' → ' + e + ')</div>';
-      if (keys.length === 0) { html += '<div style="color:var(--text3);font-size:12px">No transactions in this range.</div>'; }
-      else {
-        html += '<div class="table-wrap"><table><tr><th>Date</th><th>Spent On</th><th>Amount</th><th>Category</th><th>Type</th></tr>';
-        keys.forEach(function(id){
-          var ex = expenses[id];
-          var tcls = {Need:'t-need',Want:'t-want',Desire:'t-desire'}[ex.type]||'';
-          html += '<tr><td style="color:var(--text3)">' + ex.date + '</td><td style="color:var(--text1)">' + esc(ex.desc) + '</td><td class="amt">₹' + Number(ex.amt).toLocaleString('en-IN') + '</td><td class="' + tcls + '">' + ex.type + '</td><td style="color:var(--yellow);font-size:11px">' + (ex.vartype||'Variable') + '</td></tr>';
-        });
-        html += '</table></div>';
-      }
-
-      // Daily summary in range
-      var daily = {};
-      keys.forEach(function(id){
-        var ex = expenses[id];
-        if (!daily[ex.date]) daily[ex.date] = {Need:0,Want:0,Desire:0,varTotal:0};
-        daily[ex.date][ex.type] += Number(ex.amt);
-        if (ex.vartype !== 'Fixed') daily[ex.date].varTotal += Number(ex.amt);
-      });
-      html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px">Daily Summary</div>';
-      var dkeys = Object.keys(daily).sort(function(a,b){ return b.localeCompare(a); });
-      if (dkeys.length === 0) { html += '<div style="color:var(--text3);font-size:12px">No data.</div>'; }
-      else {
-        html += '<div class="table-wrap"><table><tr><th>Date</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th><th>vs Limit</th></tr>';
-        dkeys.forEach(function(d){
-          var row = daily[d];
-          var total = (row.Need||0) + (row.Want||0) + (row.Desire||0);
-          var dayLim = limits[d.slice(0,7)] ? parseFloat(limits[d.slice(0,7)]) : null;
-          var diff = dayLim ? (row.varTotal - dayLim) : null;
-          var diffHtml = diff === null ? '—' : '<span style="color:' + (diff>0?'var(--red)':'var(--green)') + ';font-weight:700">' + (diff>0?'+':'') + '₹' + Math.abs(Math.round(diff)).toLocaleString('en-IN') + '</span>';
-          html += '<tr><td style="color:var(--text3)">' + d + '</td><td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td><td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td><td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td><td class="amt">₹' + total.toLocaleString('en-IN') + '</td><td>' + diffHtml + '</td></tr>';
-        });
-        html += '</table></div>';
-      }
-
-      // Monthly summary
-      var monthly2 = {};
-      keys.forEach(function(id){ var ex = expenses[id]; var m = ex.date.slice(0,7); if (!monthly2[m]) monthly2[m] = {Need:0,Want:0,Desire:0}; monthly2[m][ex.type] += Number(ex.amt); });
-      html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px">Monthly Summary</div>';
-      var mkeys2 = Object.keys(monthly2).sort(function(a,b){ return b.localeCompare(a); });
-      if (mkeys2.length === 0) { html += '<div style="color:var(--text3);font-size:12px">No data.</div>'; }
-      else {
-        html += '<div class="table-wrap"><table><tr><th>Month</th><th class="t-need">Needs</th><th class="t-want">Wants</th><th class="t-desire">Desires</th><th>Total</th></tr>';
-        mkeys2.forEach(function(m){ var row = monthly2[m]; var total=(row.Need||0)+(row.Want||0)+(row.Desire||0); var ml = new Date(m+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'}); html += '<tr><td style="font-weight:600;color:var(--text1)">' + ml + '</td><td class="t-need">₹' + (row.Need||0).toLocaleString('en-IN') + '</td><td class="t-want">₹' + (row.Want||0).toLocaleString('en-IN') + '</td><td class="t-desire">₹' + (row.Desire||0).toLocaleString('en-IN') + '</td><td class="amt">₹' + total.toLocaleString('en-IN') + '</td></tr>'; });
-        html += '</table></div>';
-      }
-      document.getElementById('exp_hist_result').innerHTML = html;
+      _lastExpHistData = {expenses: expenses, limits: limits, keys: keys, s: s, e: e};
+      var q = (document.getElementById('exp_hist_search').value || '').toLowerCase();
+      renderExpHistFiltered(_lastExpHistData, q);
     }
 
     // ═══════════════════════════════════════
@@ -2094,6 +2202,7 @@
       });
       tbl.innerHTML = html;
       updateOverviewMetrics();
+      renderWeightChart();
     }
 
     // Auto-calc fat kg when fat% is entered
@@ -2243,6 +2352,51 @@
       if (el) { el.value = val; renderScores(); }
     }
 
+    // Consistency score: % of last 7 days where user logged something in any tracker
+    function consistencyScore() {
+      var loggedDays = 0;
+      for (var i = 1; i <= 7; i++) {  // last 7 days (not today)
+        var d = isoD(new Date(Date.now() - i * 86400000));
+        var hasData = false;
+        ['sched','m1','m2'].forEach(function(store) {
+          var data = ls_get(store);
+          Object.keys(data).forEach(function(k) {
+            if (k.indexOf('_' + d) !== -1) hasData = true;
+          });
+        });
+        var expenses = getExpenses();
+        Object.keys(expenses).forEach(function(id) {
+          if (expenses[id].date === d) hasData = true;
+        });
+        if (hasData) loggedDays++;
+      }
+      return Math.round((loggedDays / 7) * 100);
+    }
+
+    // Meal log score: score across all meal logs for a date
+    function mealLogScore(dateStr) {
+      var mealLog = ls_get('meal_log');
+      var dayLog = mealLog[dateStr];
+      if (!dayLog || !dayLog.meals || dayLog.meals.length === 0) return null;
+      // Get rows for selected meals and score them
+      var recipes = getMealRecipes();
+      var totalRows = 0, greenRows = 0, anyLogged = false;
+      var trackerData = ls_get('meal_tracker');
+      dayLog.meals.forEach(function(mealName) {
+        var recipe = recipes[mealName];
+        if (!recipe || !recipe.items) return;
+        recipe.items.forEach(function(item, idx) {
+          var k = 'ml_' + mealName.replace(/\s/g,'_') + '_' + idx + '_' + dateStr;
+          var v = trackerData[k] || 0;
+          totalRows++;
+          if (v === 1) { greenRows++; anyLogged = true; }
+          else if (v === 2) { anyLogged = true; }
+        });
+      });
+      if (!anyLogged) return null;
+      return Math.round((greenRows / totalRows) * 100);
+    }
+
     function renderScores() {
       var dateInput = document.getElementById('score_date');
       if (!dateInput) return;
@@ -2250,23 +2404,15 @@
       if (!d) return;
 
       var schedPct = scoreForTracker('sched', getAllSchedRows().length, d);
-      var m1Pct = scoreForTracker('m1', M1_ROWS.length, d);
-      var m2Pct = scoreForTracker('m2', M2_ROWS.length, d);
       var expData = expenseScoreForDate(d);
       var expPct = expData ? expData.pct : null;
+      var mealPct = mealLogScore(d);
+      var consPct = consistencyScore(); // always based on last 7 days
 
-      // If m1 has data but m2 doesn't → m2 = 0 (missed, not null)
-      // If m2 has data but m1 doesn't → m1 = 0
-      var m1Eff = m1Pct, m2Eff = m2Pct;
-      if (m1Pct !== null && m2Pct === null) m2Eff = 0;
-      if (m2Pct !== null && m1Pct === null) m1Eff = 0;
-
-      // Overall: 25% each. Null = no data at all (not even started). 0 = fully missed.
       var expScore = expPct === null ? null : (expPct <= 100 ? expPct : Math.max(0, 200 - expPct));
-      var metrics = [schedPct, expScore, m1Eff, m2Eff];
-      var defined = metrics.filter(function(v){ return v !== null; });
-      var overall = defined.length > 0
-        ? Math.round(defined.reduce(function(a,b){return a+b},0) / defined.length)
+      var metrics = [schedPct, expScore, mealPct, consPct].filter(function(v){ return v !== null; });
+      var overall = metrics.length > 0
+        ? Math.round(metrics.reduce(function(a,b){return a+b},0) / metrics.length)
         : null;
 
       var row = document.getElementById('score_row');
@@ -2275,8 +2421,8 @@
         '<div class="score-circle score-sm">' + makeCircleSVG(schedPct, 'SCHED', 'sm', false) + '<div class="s-label">Schedule</div></div>' +
         '<div class="score-circle score-md">' + makeCircleSVG(expPct, 'SPEND', 'md', true) + '<div class="s-label">Expenses</div></div>' +
         '<div class="score-circle score-lg">' + makeCircleSVG(overall, 'DAY', 'lg', false) + '<div class="s-label" style="font-size:11px;font-weight:700;color:var(--text2)">Overall</div></div>' +
-        '<div class="score-circle score-md">' + makeCircleSVG(m1Pct, 'MEAL 1', 'md', false) + '<div class="s-label">Meal 1</div></div>' +
-        '<div class="score-circle score-sm">' + makeCircleSVG(m2Pct, 'MEAL 2', 'sm', false) + '<div class="s-label">Meal 2</div></div>';
+        '<div class="score-circle score-md">' + makeCircleSVG(mealPct, 'MEALS', 'md', false) + '<div class="s-label">Meals</div></div>' +
+        '<div class="score-circle score-sm">' + makeCircleSVG(consPct, 'HABIT', 'sm', false) + '<div class="s-label">Consistency</div></div>';
     }
 
     // ═══════════════════════════════════════
@@ -2349,8 +2495,8 @@
         if (formRow) formRow.style.display = 'block';
       }
 
-      // Past months
-      var pastKeys = Object.keys(limits).sort().reverse().filter(function(m){ return m !== curMonth; });
+      // Past months — show only the most recent 1 past month
+      var pastKeys = Object.keys(limits).sort().reverse().filter(function(m){ return m !== curMonth; }).slice(0, 1);
       if (pastKeys.length > 0) {
         html += '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;margin-top:4px">Past months</div>';
         pastKeys.forEach(function(m) {
@@ -2558,21 +2704,41 @@
     }
 
     // ═══════════════════════════════════════
-    // CUSTOM GROCERY ITEMS
+    // GROCERY & ESSENTIALS
     // ═══════════════════════════════════════
     function addCustomGrocery() {
-      var name = document.getElementById('cg_name').value.trim();
-      var qty  = document.getElementById('cg_qty').value.trim();
-      var freq = document.getElementById('cg_freq').value;
-      if (!name || !qty) { alert('Enter name and quantity.'); return; }
+      var name  = document.getElementById('cg_name').value.trim();
+      var qty   = document.getElementById('cg_qty').value.trim();
+      var cat   = document.getElementById('cg_cat').value;
+      var freq  = document.getElementById('cg_freq').value;
+      var notes = document.getElementById('cg_notes').value.trim();
+      if (!name) { alert('Enter item name.'); return; }
       var list = ls_get('custom_groc');
       var id = Date.now().toString();
-      list[id] = {id:id, name:name, qty:qty, freq:freq};
+      list[id] = {id:id, name:name, qty:qty, cat:cat, freq:freq, notes:notes};
       ls_set('custom_groc', list);
       document.getElementById('cg_name').value = '';
       document.getElementById('cg_qty').value = '';
+      document.getElementById('cg_notes').value = '';
       renderCustomGrocery();
       buildGrocery();
+    }
+
+    function editCustomGrocery(id) {
+      var list = ls_get('custom_groc');
+      var g = list[id];
+      if (!g) return;
+      document.getElementById('cg_name').value = g.name;
+      document.getElementById('cg_qty').value = g.qty;
+      document.getElementById('cg_cat').value = g.cat || 'meal';
+      document.getElementById('cg_freq').value = g.freq || 'weekly';
+      document.getElementById('cg_notes').value = g.notes || '';
+      // Remove old entry so save creates fresh
+      delete list[id];
+      ls_set('custom_groc', list);
+      renderCustomGrocery();
+      buildGrocery();
+      document.getElementById('cg_name').focus();
     }
 
     function deleteCustomGrocery(id) {
@@ -2588,42 +2754,179 @@
       var keys = Object.keys(list);
       var el = document.getElementById('custom_groc_list');
       if (!el) return;
-      if (keys.length === 0) { el.innerHTML = ''; return; }
-      var html = '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Your custom items:</div>';
-      keys.forEach(function(id) {
-        var g = list[id];
-        var freqLbl = {weekly:'Weekly',three:'3 days','3day':'3 days','2day':'2 days'}[g.freq] || g.freq;
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
-        html += '<span style="flex:1;color:var(--text1);font-size:13px"><strong>' + esc(g.name) + '</strong> <span style="color:var(--text3);font-size:11px">· ' + esc(g.qty) + ' · ' + freqLbl + '</span></span>';
-        html += '<button class="btn btn-r btn-sm" onclick="deleteCustomGrocery(\'' + id + '\')">✕</button>';
-        html += '</div>';
-      });
+      if (keys.length === 0) {
+        el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">No items yet. Add groceries and essentials above.</div>';
+        return;
+      }
+      var freqLbls = {daily:'Daily', '2day':'Every 2–3d', '3day':'Every 3d', weekly:'Weekly', monthly:'Monthly'};
+      var catLbls  = {meal:'🥗', essential:'🧴'};
+      // Group by category
+      var meal = keys.filter(function(k){ return (list[k].cat||'meal')==='meal'; });
+      var ess  = keys.filter(function(k){ return list[k].cat==='essential'; });
+      var html = '';
+      function renderGroup(grpKeys, label) {
+        if (grpKeys.length === 0) return '';
+        var h = '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 4px">' + label + '</div>';
+        grpKeys.forEach(function(id) {
+          var g = list[id];
+          h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+          h += '<div style="flex:1"><div style="font-size:13px;color:var(--text1);font-weight:500">' + esc(g.name) + '</div>';
+          h += '<div style="font-size:11px;color:var(--text3)">' + esc(g.qty||'') + (g.qty&&g.freq?' · ':'') + (freqLbls[g.freq]||g.freq||'') + (g.notes ? ' · ' + esc(g.notes) : '') + '</div></div>';
+          h += '<button class="btn btn-w btn-sm admin-only" style="font-size:10px" onclick="editCustomGrocery(\'' + id + '\')">✏️</button>';
+          h += '<button class="btn btn-r btn-sm admin-only" onclick="deleteCustomGrocery(\'' + id + '\')">✕</button>';
+          h += '</div>';
+        });
+        return h;
+      }
+      html += renderGroup(meal, '🥗 Meal Groceries');
+      html += renderGroup(ess, '🧴 Daily Essentials');
       el.innerHTML = html;
     }
 
-    // Override buildGrocery to include custom items
-    var _origBuildGrocery = buildGrocery;
-    buildGrocery = function() {
+    // Get current week Mon–Sun
+    function getCurrentWeekDates() {
+      var now = new Date();
+      var day = now.getDay(); // 0=Sun
+      var monday = new Date(now);
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+      monday.setHours(0,0,0,0);
+      var dates = [];
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        dates.push(d);
+      }
+      return dates;
+    }
+
+    function buildGroceryCategoryTable(wrapId, catKey, storeName) {
+      var list = ls_get('custom_groc');
+      var items = Object.keys(list)
+        .filter(function(k){ return (list[k].cat||'meal') === catKey; })
+        .map(function(k){ return list[k]; });
+
+      var wrapEl = document.getElementById(wrapId);
+      if (!wrapEl) return;
+      if (items.length === 0) {
+        wrapEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px">No items in this category yet.</div>';
+        return;
+      }
+
+      var todayStr = isoD(new Date());
+      var data = ls_get(storeName);
+
+      // Map frequency to day interval and number of columns
+      var freqInterval = {daily:1, '2day':2, '3day':3, weekly:7, monthly:30};
+      var freqCols     = {daily:5, '2day':4, '3day':3, weekly:3, monthly:3};
+      var freqOrder    = ['daily', '2day', '3day', 'weekly', 'monthly'];
+      var freqLabels   = {daily:'Every Day', '2day':'Every 2–3 Days', '3day':'Every 3 Days', weekly:'Weekly', monthly:'Monthly'};
+
+      // Build dates for a given freq: today + N evenly spaced future dates
+      function getDatesForFreq(freq) {
+        var interval = freqInterval[freq] || 7;
+        var cols     = freqCols[freq]     || 3;
+        var result = [];
+        for (var i = 0; i < cols; i++) {
+          var d = new Date();
+          d.setHours(0,0,0,0);
+          d.setDate(d.getDate() + i * interval);
+          result.push(d);
+        }
+        return result;
+      }
+
+      // Group items by frequency
+      var freqGroups = {};
+      items.forEach(function(g) {
+        var f = g.freq || 'weekly';
+        if (!freqGroups[f]) freqGroups[f] = [];
+        freqGroups[f].push(g);
+      });
+
+      var html = '';
+      freqOrder.forEach(function(freq) {
+        if (!freqGroups[freq] || freqGroups[freq].length === 0) return;
+        var dates = getDatesForFreq(freq);
+        html += '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px;padding-bottom:4px;border-bottom:0.5px solid var(--border)">' + (freqLabels[freq] || freq) + '</div>';
+        html += '<table class="trk"><thead><tr>';
+        html += '<th class="s2">Item</th>';
+        dates.forEach(function(d) {
+          var ds = isoD(d);
+          var isTodayCol = ds === todayStr;
+          html += '<th class="dc" style="' + (isTodayCol ? 'color:var(--accent);font-weight:700' : '') + '">' + fmtD(d) + (isTodayCol ? ' ●' : '') + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        freqGroups[freq].forEach(function(g) {
+          html += '<tr><td class="s2"><div style="font-size:12px;font-weight:600;color:var(--text1)">' + esc(g.name) + '</div>';
+          if (g.qty) html += '<div style="font-size:10px;color:var(--text3)">' + esc(g.qty) + '</div>';
+          html += '</td>';
+          dates.forEach(function(d) {
+            var ds = isoD(d);
+            var k = storeName + '_' + g.id + '_' + ds;
+            var state = data[k] || 0;
+            html += '<td class="dc"><button class="tri-btn" style="' + triStyle(state) + '" data-k="' + k + '" data-store="' + storeName + '" data-flash="fl_groc" onclick="triClick(this)"></button></td>';
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+      });
+      wrapEl.innerHTML = html;
+    }
+
+    function buildGrocery() {
+      var lbl = document.getElementById('groc_week_label');
+      if (lbl) lbl.textContent = 'Starting ' + isoD(new Date());
+      buildGroceryCategoryTable('groc_meal_wrap', 'meal', 'groc_meal');
+      buildGroceryCategoryTable('groc_ess_wrap', 'essential', 'groc_ess');
+    }
+
+    var _lastGrocPastData = null; // cache for search filter
+
+    function filterGroceryPast() {
+      if (!_lastGrocPastData) return;
+      var q = (document.getElementById('groc_search').value || '').toLowerCase();
+      renderGrocPastFiltered(_lastGrocPastData.meal, _lastGrocPastData.ess, _lastGrocPastData.dates, q);
+    }
+
+    function renderGrocPastFiltered(mealItems, essItems, dates, q) {
+      function buildTable(wrapId, items, storeName, label) {
+        var el = document.getElementById(wrapId);
+        if (!el) return;
+        var filtered = q ? items.filter(function(g){ return g.name.toLowerCase().indexOf(q) !== -1 || (g.qty||'').toLowerCase().indexOf(q) !== -1; }) : items;
+        if (filtered.length === 0) { el.innerHTML = ''; return; }
+        var data = ls_get(storeName);
+        var html = '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">' + label + '</div>';
+        html += '<div class="tracker-outer"><table class="trk"><thead><tr><th class="s2">Item</th>';
+        dates.forEach(function(d){ html += '<th class="dc">' + fmtD(d) + '</th>'; });
+        html += '</tr></thead><tbody>';
+        filtered.forEach(function(g) {
+          html += '<tr><td class="s2"><strong>' + esc(g.name) + '</strong><br><span style="font-size:10px;color:var(--text3)">' + esc(g.qty||'') + '</span></td>';
+          dates.forEach(function(d) {
+            var k = storeName + '_' + g.id + '_' + isoD(d);
+            var state = data[k] || 0;
+            html += '<td class="dc"><button class="tri-btn" style="' + triStyle(state) + '" disabled></button></td>';
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        el.innerHTML = html;
+      }
+      buildTable('groc_past_meal', mealItems, 'groc_meal', '🥗 Meal Groceries');
+      buildTable('groc_past_ess', essItems, 'groc_ess', '🧴 Daily Essentials');
+    }
+
+    function buildGroceryPast() {
       var s = document.getElementById('gr_s').value;
       var e = document.getElementById('gr_e').value;
-      if (!s || !e) {
-        var ts = isoD(new Date()); var te = isoD(new Date(Date.now()+30*86400000));
-        document.getElementById('gr_s').value = ts;
-        document.getElementById('gr_e').value = te;
-      }
-      var custom = ls_get('custom_groc');
-      var extraW = [], extra3 = [], extra2 = [];
-      Object.keys(custom).forEach(function(id) {
-        var g = custom[id];
-        var row = {cat:'Custom', item:g.name, qty:g.qty};
-        if (g.freq === 'weekly') extraW.push(row);
-        else if (g.freq === '3day') extra3.push(row);
-        else extra2.push(row);
-      });
-      buildGroceryTable('groc_weekly', GROC_WEEKLY.concat(extraW), 'groc_w', 7);
-      buildGroceryTable('groc_3day', GROC_3DAY.concat(extra3), 'groc_3', 3);
-      buildGroceryTable('groc_2day', GROC_2DAY.concat(extra2), 'groc_2', 2);
-    };
+      if (!s || !e) { alert('Select date range.'); return; }
+      var dates = getDates(s, e);
+      var list = ls_get('custom_groc');
+      var mealItems = Object.keys(list).filter(function(k){ return (list[k].cat||'meal')==='meal'; }).map(function(k){ return list[k]; });
+      var essItems  = Object.keys(list).filter(function(k){ return list[k].cat==='essential'; }).map(function(k){ return list[k]; });
+      _lastGrocPastData = {meal: mealItems, ess: essItems, dates: dates};
+      var q = (document.getElementById('groc_search').value || '').toLowerCase();
+      renderGrocPastFiltered(mealItems, essItems, dates, q);
+    }
 
     // ═══════════════════════════════════════
     // HABITS (DAILY FORGE)
@@ -2700,9 +3003,19 @@
             else streakHtml += '<div class="habit-day" title="' + ds + '"></div>';
           }
           var pct = total > 0 ? Math.round(greenCount/total*100) : 0;
+          // Calculate current streak
+          var currentStreak = 0;
+          var checkD = new Date();
+          for (var si = 0; si < 365; si++) {
+            checkD.setDate(checkD.getDate() - (si===0?0:1));
+            var ds = isoD(checkD);
+            if (h.log[ds] === 1) currentStreak++;
+            else if (h.log[ds] === 2 || si > 0) break;
+          }
+          var streakEmoji = currentStreak >= 21 ? '🔥🔥' : currentStreak >= 7 ? '🔥' : currentStreak >= 3 ? '⚡' : '';
           html += '<div style="background:var(--bg3);border:0.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">';
           html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
-          html += '<div><div style="font-size:14px;font-weight:700;color:var(--text1)">' + esc(h.name) + '</div>';
+          html += '<div><div style="font-size:14px;font-weight:700;color:var(--text1)">' + esc(h.name) + (currentStreak > 0 ? ' <span style="color:var(--accent);font-size:13px">' + streakEmoji + ' ' + currentStreak + 'd streak</span>' : '') + '</div>';
           html += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + esc(h.cat) + (h.time?' · '+esc(h.time):'') + ' · Goal: ' + h.goal + ' days · ' + pct + '% success</div>';
           if (h.why) html += '<div style="font-size:11px;color:var(--teal);margin-top:3px">💬 ' + esc(h.why) + '</div>';
           html += '</div>';
@@ -2847,6 +3160,347 @@
     }
 
     // ═══════════════════════════════════════
+    // MEAL LOG
+    // ═══════════════════════════════════════
+    function getMealRecipes() { return ls_get('meal_recipes'); }
+
+    function renderMealLog() {
+      var d = document.getElementById('ml_date').value;
+      if (!d) return;
+      var recipes = getMealRecipes();
+      var rkeys = Object.keys(recipes);
+      var mealLog = ls_get('meal_log');
+      var existing = (mealLog[d] && mealLog[d].meals) ? mealLog[d].meals : [];
+
+      var html = '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Select meals you had on ' + d + ':</div>';
+      if (rkeys.length === 0) {
+        html += '<div style="font-size:12px;color:var(--text3)">No recipes yet. Go to Recipes tab to add some.</div>';
+      } else {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+        rkeys.forEach(function(name) {
+          var sel = existing.indexOf(name) !== -1;
+          html += '<button class="modal-opt' + (sel?' sel':'') + ' admin-only" style="min-width:80px" onclick="toggleMealSel(\'' + name.replace(/'/g,"\\'") + '\',this)">' + esc(name) + '</button>';
+        });
+        html += '</div>';
+      }
+      document.getElementById('ml_meal_select').innerHTML = html;
+
+      // Show trackers for selected meals
+      renderMealTrackers(d, existing);
+    }
+
+    function toggleMealSel(name, btn) {
+      btn.classList.toggle('sel');
+    }
+
+    function saveMealLogSelection() {
+      var d = document.getElementById('ml_date').value;
+      if (!d) { alert('Select a date first.'); return; }
+      var selected = [];
+      document.querySelectorAll('#ml_meal_select .modal-opt.sel').forEach(function(btn) {
+        selected.push(btn.textContent.trim());
+      });
+      var mealLog = ls_get('meal_log');
+      if (!mealLog[d]) mealLog[d] = {};
+      mealLog[d].meals = selected;
+      ls_set('meal_log', mealLog);
+      renderMealTrackers(d, selected);
+    }
+
+    function renderMealTrackers(dateStr, mealNames) {
+      var wrap = document.getElementById('ml_tracker_wrap');
+      if (!wrap) return;
+      if (!mealNames || mealNames.length === 0) { wrap.innerHTML = ''; return; }
+      var recipes = getMealRecipes();
+      var trackerData = ls_get('meal_tracker');
+      var TODAY_ISO = isoD(new Date());
+      var YEST_ISO = isoD(new Date(Date.now()-86400000));
+      var isPast = dateStr < YEST_ISO;
+      var html = '';
+      mealNames.forEach(function(mealName) {
+        var recipe = recipes[mealName];
+        if (!recipe || !recipe.items) return;
+        html += '<div class="card">';
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+        html += '<div class="card-title" style="margin-bottom:0">🍽️ ' + esc(mealName) + '</div>';
+        html += '<span style="font-size:11px;color:var(--text3)">' + (recipe.cal||'') + ' kcal</span>';
+        html += '</div>';
+        html += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tap to mark each ingredient</div>';
+        html += '<div class="tracker-outer"><table class="trk"><thead><tr>';
+        html += '<th class="s2">Ingredient</th><th class="dc">' + (dateStr===TODAY_ISO?'<span style="color:var(--accent)">Today</span>':fmtD(new Date(dateStr+'T00:00:00'))) + '</th>';
+        html += '</tr></thead><tbody>';
+        recipe.items.forEach(function(item, idx) {
+          var k = 'ml_' + mealName.replace(/[\s']/g,'_') + '_' + idx + '_' + dateStr;
+          var state = trackerData[k] || 0;
+          if (isPast) {
+            html += '<tr><td class="s2">' + esc(item) + '</td><td class="dc"><button class="tri-btn" style="' + triStyle(state) + '" disabled></button></td></tr>';
+          } else {
+            html += '<tr><td class="s2">' + esc(item) + '</td><td class="dc"><button class="tri-btn" style="' + triStyle(state) + '" data-k="' + k + '" data-store="meal_tracker" data-flash="fl_sched" onclick="triClick(this)"></button></td></tr>';
+          }
+        });
+        html += '</tbody></table></div></div>';
+      });
+      wrap.innerHTML = html;
+    }
+
+    function renderMealLogHistory() {
+      var s = document.getElementById('ml_hist_s').value;
+      var e = document.getElementById('ml_hist_e').value;
+      if (!s || !e) { alert('Select date range'); return; }
+      var mealLog = ls_get('meal_log');
+      var wrap = document.getElementById('ml_hist_wrap');
+      var dates = getDates(s, e);
+      var html = '';
+      dates.reverse().forEach(function(d) {
+        var ds = isoD(d);
+        var entry = mealLog[ds];
+        if (!entry || !entry.meals || entry.meals.length === 0) return;
+        html += '<div style="padding:8px 0;border-bottom:0.5px solid var(--border)">';
+        html += '<span style="color:var(--text3);font-size:11px">' + ds + '</span> ';
+        entry.meals.forEach(function(m) {
+          html += '<span class="badge bb" style="margin-right:4px">' + esc(m) + '</span>';
+        });
+        html += '</div>';
+      });
+      wrap.innerHTML = html || '<div style="color:var(--text3);font-size:12px;padding:12px 0">No meal logs in this range.</div>';
+    }
+
+    // ═══════════════════════════════════════
+    // RECIPES
+    // ═══════════════════════════════════════
+    function getMealRecipes() { return ls_get('meal_recipes'); }
+
+    function seedDefaultRecipes() {
+      var existing = ls_get('meal_recipes');
+      if (Object.keys(existing).length > 0) return; // already have recipes
+      var defaults = {
+        'Chicken Stir Fry Bowl': {
+          name:'Chicken Stir Fry Bowl', cat:'Dinner', cal:'655',
+          nutrition:'Protein ~72g · Carbs ~52g · Fat ~18g',
+          items:[
+            'Chicken breast 180g chunks',
+            'Whole green beans 60g',
+            'Capsicum 60g',
+            'Onion 50g',
+            'Broccoli 80g',
+            'Sweet potato 100g — boiled',
+            'Egg 1 whole — hard boiled',
+            'Curd 80g — cold side',
+            'Pumpkin seeds 10g — sprinkle',
+            'Flax seeds 8g ground — sprinkle'
+          ],
+          prep:[
+            'Marinate chicken: salt + ½ tsp chilli + ¼ tsp turmeric + 1 tbsp ginger-garlic paste + lemon. Minimum 30 min.',
+            'Boil sweet potato + egg together. 800W · 12 min. Cool egg in cold water, peel.',
+            'Heat pan 300W → add 1 tsp coconut oil → 500W → pan-fry chicken chunks 10–12 min until lightly charred.',
+            'Same pan: stir-fry onion 2 min → beans + capsicum 2 min → broccoli last 2 min. Season with salt + pepper.',
+            'Plate everything. Sprinkle seeds. Squeeze lemon. Serve with cold curd on side.'
+          ],
+          notes:'Ask butcher to cut breast into curry-size chunks. Marinate in the morning, refrigerate until use.'
+        },
+        'Egg Bhurji Bowl': {
+          name:'Egg Bhurji Bowl', cat:'Dinner', cal:'480',
+          nutrition:'Protein ~38g · Carbs ~28g · Fat ~24g',
+          items:[
+            'Eggs 3 whole',
+            'Onion 60g — fine chopped',
+            'Tomato 80g — chopped',
+            'Capsicum 50g — chopped',
+            'Green chilli 1 — chopped',
+            'Ginger-garlic paste 1 tsp',
+            'Turmeric ¼ tsp, Chilli powder ½ tsp',
+            'Coriander fresh — handful',
+            'Sweet potato 100g — boiled side',
+            'Curd 80g — cold side'
+          ],
+          prep:[
+            'Boil sweet potato separately. 800W · 12 min.',
+            'Heat pan 300W. Add 1 tsp oil. 500W. Add onion → cook 3 min till golden.',
+            'Add ginger-garlic paste + chilli → 1 min. Add tomato + capsicum → cook 4 min.',
+            'Add turmeric + chilli powder. Beat eggs in bowl, pour into pan.',
+            'Stir continuously on 300W until eggs are just cooked — not dry. Add coriander.',
+            'Serve with boiled sweet potato and cold curd.'
+          ],
+          notes:'Do not overcook eggs — remove from heat while slightly soft, they finish cooking from residual heat.'
+        },
+        'Paneer Tikka Bowl': {
+          name:'Paneer Tikka Bowl', cat:'Lunch', cal:'580',
+          nutrition:'Protein ~35g · Carbs ~40g · Fat ~28g',
+          items:[
+            'Paneer 150g — cubed',
+            'Curd 40g — for marinade',
+            'Capsicum 60g — cubed',
+            'Onion 50g — cubed',
+            'Tomato 60g — raw side',
+            'Cucumber 80g — raw side',
+            'Chilli powder ½ tsp, turmeric ¼ tsp, garam masala ¼ tsp',
+            'Lemon juice 10ml',
+            'Sweet potato 100g — boiled side',
+            'Coriander — garnish'
+          ],
+          prep:[
+            'Mix curd + chilli powder + turmeric + garam masala + lemon + salt. Coat paneer cubes. Marinate 20 min.',
+            'Heat pan 500W. Add ½ tsp oil. Pan-fry paneer + capsicum + onion together 6–8 min until slightly charred.',
+            'Boil sweet potato separately 800W · 12 min.',
+            'Plate: pan-fried paneer mix + boiled sweet potato. Add raw tomato + cucumber on side. Garnish coriander.'
+          ],
+          notes:'No deep frying needed — dry pan sear gives good char and taste without extra calories.'
+        },
+        'Chicken Pepper Fry': {
+          name:'Chicken Pepper Fry', cat:'Dinner', cal:'620',
+          nutrition:'Protein ~58g · Carbs ~35g · Fat ~22g',
+          items:[
+            'Chicken breast 200g — small pieces',
+            'Onion 80g — sliced',
+            'Curry leaves 10g',
+            'Green chilli 2 — slit',
+            'Ginger-garlic paste 1 tbsp',
+            'Black pepper 1 tsp — coarsely crushed',
+            'Turmeric ¼ tsp',
+            'Lemon juice 10ml',
+            'Broccoli 80g — steamed side',
+            'Sweet potato 120g — boiled side'
+          ],
+          prep:[
+            'Boil sweet potato + steam broccoli simultaneously.',
+            'Marinate chicken: pepper + turmeric + ginger-garlic + lemon + salt. 20 min.',
+            'Heat pan 300W. Add 1 tsp coconut oil. 500W. Add curry leaves + green chilli → crackle 30 sec.',
+            'Add onion → cook 4 min till dark golden. Add marinated chicken.',
+            'Cook stirring occasionally on 500W for 10–12 min until dry and slightly charred.',
+            'Plate with steamed broccoli and boiled sweet potato.'
+          ],
+          notes:'Cook on high heat until chicken is slightly dry and pepper aroma comes out strongly. Classic Hyderabadi dry fry style.'
+        },
+        'Pesarattu Bowl': {
+          name:'Pesarattu Bowl', cat:'Lunch', cal:'490',
+          nutrition:'Protein ~28g · Carbs ~62g · Fat ~12g',
+          items:[
+            'Whole green moong dal 80g — soaked overnight',
+            'Green chilli 1',
+            'Ginger small piece',
+            'Coriander — handful',
+            'Onion 40g — for topping',
+            'Cucumber 80g — raw side',
+            'Curd 100g — side',
+            'Pumpkin seeds 10g'
+          ],
+          prep:[
+            'Soak moong overnight (8 hrs). Drain completely.',
+            'Blend moong + chilli + ginger + coriander + salt + little water to thick smooth batter.',
+            'Heat induction pan 500W. Spread batter thin like dosa. Cook 3–4 min per side until crispy.',
+            'Top with chopped onion + coriander while cooking second side.',
+            'Serve with curd + cucumber + pumpkin seeds on side.'
+          ],
+          notes:'Pesarattu is Andhra/Hyderabad staple — very high protein, no rice, all moong. No fermentation needed. Very filling and light on stomach.'
+        }
+      };
+      ls_set('meal_recipes', defaults);
+      // Immediately push to Firebase so it persists
+      schedulePush();
+    }
+
+    function addRecipe() {
+      var name = document.getElementById('rec_name').value.trim();
+      var cat  = document.getElementById('rec_cat').value;
+      var cal  = document.getElementById('rec_cal').value.trim();
+      var nutr = document.getElementById('rec_nutrition').value.trim();
+      var itemsRaw = document.getElementById('rec_items').value.trim();
+      var prepRaw  = document.getElementById('rec_prep').value.trim();
+      var notes    = document.getElementById('rec_notes').value.trim();
+      if (!name) { alert('Enter recipe name.'); return; }
+      if (!itemsRaw) { alert('Add at least one ingredient.'); return; }
+      var items = itemsRaw.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      var prep  = prepRaw.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      var recipes = getMealRecipes();
+      recipes[name] = {name:name, cat:cat, cal:cal, nutrition:nutr, items:items, prep:prep, notes:notes};
+      ls_set('meal_recipes', recipes);
+      ['rec_name','rec_cal','rec_nutrition','rec_items','rec_prep','rec_notes'].forEach(function(id) {
+        var el = document.getElementById(id); if (el) el.value = '';
+      });
+      renderRecipeDropdown();
+      alert('✅ Recipe "' + name + '" saved!');
+    }
+
+    function deleteRecipe(name) {
+      if (!confirm('Delete recipe "' + name + '"?')) return;
+      var recipes = getMealRecipes();
+      delete recipes[name];
+      ls_set('meal_recipes', recipes);
+      renderRecipeDropdown();
+      document.getElementById('rec_display').innerHTML = '';
+    }
+
+    function renderRecipeDropdown() {
+      var recipes = getMealRecipes();
+      var sel = document.getElementById('rec_select');
+      if (!sel) return;
+      var prev = sel.value;
+      var html = '<option value="">— Select a recipe —</option>';
+      Object.keys(recipes).sort().forEach(function(name) {
+        html += '<option value="' + esc(name) + '"' + (name===prev?' selected':'') + '>' + esc(name) + ' (' + (recipes[name].cat||'') + ')</option>';
+      });
+      sel.innerHTML = html;
+      if (prev && recipes[prev]) showRecipe(prev);
+    }
+
+    function showRecipe(name) {
+      var display = document.getElementById('rec_display');
+      if (!display) return;
+      if (!name) { display.innerHTML = ''; return; }
+      var recipes = getMealRecipes();
+      var r = recipes[name];
+      if (!r) { display.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">Recipe not found. It may not be loaded yet — tap 🔄 sync.</div>'; return; }
+      var safeName = name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      var html = '<div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:12px">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">';
+      html += '<div><div style="font-size:15px;font-weight:700;color:var(--text1)">' + esc(r.name) + '</div>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + esc(r.cat||'') + (r.cal ? ' · ' + r.cal + ' kcal' : '') + '</div></div>';
+      html += '<div style="display:flex;gap:6px">';
+      html += '<button class="btn btn-w btn-sm admin-only" onclick="editRecipe(\'' + safeName + '\')">✏️ Edit</button>';
+      html += '<button class="btn btn-r btn-sm admin-only" onclick="deleteRecipe(\'' + safeName + '\')">🗑</button>';
+      html += '</div></div>';
+      if (r.nutrition) { html += '<div style="font-size:12px;color:var(--green);margin-bottom:10px">📊 ' + esc(r.nutrition) + '</div>'; }
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Ingredients</div>';
+      r.items.forEach(function(item) {
+        html += '<div style="font-size:13px;color:var(--text1);padding:4px 0;border-bottom:0.5px solid var(--border)">· ' + esc(item) + '</div>';
+      });
+      if (r.prep && r.prep.length > 0) {
+        html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px">Prep Guide</div>';
+        r.prep.forEach(function(step, i) {
+          html += '<div style="font-size:12px;color:var(--text2);padding:5px 0;border-bottom:0.5px solid var(--border2)">';
+          html += '<strong style="color:var(--accent)">Step ' + (i+1) + '</strong> — ' + esc(step);
+          html += '</div>';
+        });
+      }
+      if (r.notes) { html += '<div style="margin-top:10px" class="note">💡 ' + esc(r.notes) + '</div>'; }
+      html += '</div>';
+      display.innerHTML = html;
+    }
+
+    function editRecipe(name) {
+      var recipes = getMealRecipes();
+      var r = recipes[name];
+      if (!r) return;
+      // Populate the add form with existing values
+      document.getElementById('rec_name').value = r.name || '';
+      var catSel = document.getElementById('rec_cat');
+      if (catSel) catSel.value = r.cat || 'Dinner';
+      document.getElementById('rec_cal').value = r.cal || '';
+      document.getElementById('rec_nutrition').value = r.nutrition || '';
+      document.getElementById('rec_items').value = (r.items || []).join('\n');
+      document.getElementById('rec_prep').value = (r.prep || []).join('\n');
+      document.getElementById('rec_notes').value = r.notes || '';
+      // Delete old recipe so saving the form replaces it
+      delete recipes[name];
+      ls_set('meal_recipes', recipes);
+      renderRecipeDropdown();
+      document.getElementById('rec_display').innerHTML = '<div class="info-o">Recipe loaded into form above. Edit and click + Save Recipe to update.</div>';
+      // Scroll to the add form
+      var addCard = document.querySelector('#sec_recipes .card.admin-only');
+      if (addCard) addCard.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    // ═══════════════════════════════════════
     // THEMED PROMPT (replaces native appPrompt())
     // ═══════════════════════════════════════
     var _apromptCb = null;
@@ -2918,12 +3572,8 @@
       pickerSelectedMonth = idx;
       var mm = String(idx + 1).padStart(2, '0');
       var val = pickerYear + '-' + mm;
-      document.getElementById('lim_month').value = val;
-      var btn = document.getElementById('lim_month_btn');
-      if (btn) {
-        btn.textContent = MONTHS[idx] + ' ' + pickerYear;
-        btn.style.color = 'var(--text1)';
-      }
+      var hiddenInput = document.getElementById('lim_month');
+      if (hiddenInput) hiddenInput.value = val;
       renderPickerMonths();
       closePicker();
     }
@@ -2931,6 +3581,251 @@
     // Escape HTML
     function esc(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ═══════════════════════════════════════
+    // WATER TRACKER
+    // ═══════════════════════════════════════
+    var WATER_TARGET = 3000; // ml
+    var WATER_UNIT   = 250;  // ml per cup
+
+    function getWaterData() { return ls_get('water_log'); }
+
+    function getTodayWater() {
+      var d = isoD(new Date());
+      var log = getWaterData();
+      return log[d] || 0;
+    }
+
+    function addWater(ml) {
+      var d = isoD(new Date());
+      var log = getWaterData();
+      log[d] = Math.min((log[d] || 0) + ml, WATER_TARGET);
+      ls_set('water_log', log);
+      renderWater();
+    }
+
+    function resetWater() {
+      var d = isoD(new Date());
+      var log = getWaterData();
+      log[d] = 0;
+      ls_set('water_log', log);
+      renderWater();
+    }
+
+    function renderWater() {
+      var cups = Math.floor(WATER_TARGET / WATER_UNIT); // 12 cups
+      var drunk = getTodayWater();
+      var filledCups = Math.round(drunk / WATER_UNIT);
+      var el = document.getElementById('water_cups');
+      var lbl = document.getElementById('water_label');
+      if (!el) return;
+      var isROwater = _authRole === 'readonly';
+      var html = '';
+      for (var i = 0; i < cups; i++) {
+        var filled = i < filledCups;
+        html += '<button class="water-cup' + (filled?' filled':'') + '"' + (isROwater ? ' disabled style="pointer-events:none;opacity:0.6"' : ' onclick="addWater(' + WATER_UNIT + ')"') + '>💧</button>';
+      }
+      el.innerHTML = html;
+      if (lbl) {
+        var pct = Math.round(drunk / WATER_TARGET * 100);
+        lbl.textContent = drunk.toLocaleString('en-IN') + ' / ' + WATER_TARGET.toLocaleString('en-IN') + ' ml (' + pct + '%)';
+        lbl.style.color = drunk >= WATER_TARGET ? 'var(--green)' : drunk >= 2000 ? 'var(--yellow)' : 'var(--text3)';
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // WEIGHT CHART
+    // ═══════════════════════════════════════
+    function renderWeightChart() {
+      var el = document.getElementById('wt_chart');
+      if (!el) return;
+      var data = ls_get('weight_log');
+      var keys = Object.keys(data).sort(function(a,b){ return data[a].date.localeCompare(data[b].date); });
+      if (keys.length < 2) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Log at least 2 entries to see chart.</div>'; return; }
+      var points = keys.slice(-20).map(function(k){ return data[k]; }); // last 20 entries
+      var weights = points.map(function(p){ return parseFloat(p.wt); });
+      var minW = Math.min.apply(null, weights) - 1;
+      var maxW = Math.max.apply(null, weights) + 1;
+      var W = 320, H = 120, PL = 36, PR = 10, PT = 10, PB = 28;
+      var cW = W - PL - PR, cH = H - PT - PB;
+      var xStep = cW / (points.length - 1);
+      function xOf(i) { return PL + i * xStep; }
+      function yOf(w) { return PT + cH - ((w - minW) / (maxW - minW)) * cH; }
+      var path = points.map(function(p,i){ return (i===0?'M':'L') + xOf(i).toFixed(1) + ',' + yOf(parseFloat(p.wt)).toFixed(1); }).join(' ');
+      var areaPath = path + ' L' + xOf(points.length-1).toFixed(1) + ',' + (PT+cH) + ' L' + PL + ',' + (PT+cH) + ' Z';
+      // Y axis labels
+      var yLabels = '';
+      for (var i = 0; i <= 3; i++) {
+        var val = minW + (maxW - minW) * i / 3;
+        var y = yOf(val);
+        yLabels += '<text x="' + (PL-4) + '" y="' + y.toFixed(1) + '" text-anchor="end" font-size="9" fill="var(--text3)">' + val.toFixed(1) + '</text>';
+        yLabels += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W-PR) + '" y2="' + y.toFixed(1) + '" stroke="var(--border)" stroke-width="0.5"/>';
+      }
+      // X labels (every 5th)
+      var xLabels = '';
+      points.forEach(function(p,i) {
+        if (i % Math.ceil(points.length/5) === 0 || i === points.length-1) {
+          var d = new Date(p.date + 'T00:00:00');
+          xLabels += '<text x="' + xOf(i).toFixed(1) + '" y="' + (H-8) + '" text-anchor="middle" font-size="9" fill="var(--text3)">' + fmtD(d) + '</text>';
+        }
+      });
+      // Target line
+      var tgt = ls_get('health_targets');
+      var tgtLine = '';
+      if (tgt.wt) {
+        var tgtW = parseFloat(tgt.wt);
+        if (tgtW >= minW && tgtW <= maxW) {
+          var ty = yOf(tgtW);
+          tgtLine = '<line x1="' + PL + '" y1="' + ty.toFixed(1) + '" x2="' + (W-PR) + '" y2="' + ty.toFixed(1) + '" stroke="var(--green)" stroke-width="1" stroke-dasharray="4,3"/>';
+          tgtLine += '<text x="' + (W-PR-2) + '" y="' + (ty-3).toFixed(1) + '" text-anchor="end" font-size="8" fill="var(--green)">target</text>';
+        }
+      }
+      // Dots
+      var dots = points.map(function(p,i) {
+        return '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(parseFloat(p.wt)).toFixed(1) + '" r="3" fill="var(--accent)" stroke="var(--bg2)" stroke-width="1.5"/>';
+      }).join('');
+      el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">'
+        + '<defs><linearGradient id="wt_grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity="0.25"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>'
+        + yLabels + xLabels + tgtLine
+        + '<path d="' + areaPath + '" fill="url(#wt_grad)"/>'
+        + '<path d="' + path + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+        + dots + '</svg>';
+    }
+
+    // ═══════════════════════════════════════
+    // WEEKLY REPORT CARD
+    // ═══════════════════════════════════════
+    function renderWeeklyReport() {
+      var el = document.getElementById('weekly_report');
+      if (!el) return;
+      var days = [];
+      for (var i = 6; i >= 0; i--) {
+        days.push(isoD(new Date(Date.now() - i * 86400000)));
+      }
+      var scores = days.map(function(d) {
+        var s = scoreForTracker('sched', getAllSchedRows().length, d);
+        var mealPct = mealLogScore(d);
+        var expData = expenseScoreForDate(d);
+        var expPct = expData ? expData.pct : null;
+        var expScore = expPct === null ? null : (expPct <= 100 ? expPct : Math.max(0, 200 - expPct));
+        var consPct = null;
+        var metrics = [s, expScore, mealPct, consPct].filter(function(v){ return v !== null; });
+        var overall = metrics.length > 0 ? Math.round(metrics.reduce(function(a,b){return a+b},0)/metrics.length) : null;
+        return {date:d, score:overall};
+      });
+      var defined = scores.filter(function(s){ return s.score !== null; });
+      var avgScore = defined.length > 0 ? Math.round(defined.reduce(function(s,v){return s+v.score},0)/defined.length) : null;
+      var streak = 0;
+      for (var i = scores.length-1; i >= 0; i--) {
+        if (scores[i].score !== null && scores[i].score >= 70) streak++;
+        else break;
+      }
+      var bestDay = null, bestScore = -1;
+      scores.forEach(function(s){ if (s.score !== null && s.score > bestScore){ bestScore = s.score; bestDay = s.date; } });
+      // Summary row
+      var summaryHtml = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+      summaryHtml += '<div class="sum-box"><div class="sv" style="color:var(--accent)">' + (avgScore !== null ? avgScore + '%' : '—') + '</div><div class="sl">Avg score</div></div>';
+      summaryHtml += '<div class="sum-box"><div class="sv" style="color:var(--green)">' + streak + 'd</div><div class="sl">Streak ≥70%</div></div>';
+      summaryHtml += '<div class="sum-box"><div class="sv" style="color:var(--teal)" style="font-size:11px">' + (bestDay ? fmtD(new Date(bestDay+'T00:00:00')) : '—') + '</div><div class="sl">Best day</div></div>';
+      summaryHtml += '</div>';
+      // Day bars
+      var barsHtml = '';
+      scores.forEach(function(s) {
+        var d = new Date(s.date+'T00:00:00');
+        var sc = s.score;
+        var barW = sc !== null ? sc : 0;
+        var barColor = sc === null ? 'var(--border)' : sc >= 80 ? 'var(--green)' : sc >= 60 ? 'var(--yellow)' : 'var(--red)';
+        var dayName = d.toLocaleDateString('en-IN', {weekday:'short'});
+        barsHtml += '<div class="report-day">';
+        barsHtml += '<div style="width:32px;font-size:11px;color:var(--text3);font-weight:600">' + dayName + '</div>';
+        barsHtml += '<div class="report-bar-wrap"><div class="report-bar" style="width:' + barW + '%;background:' + barColor + '"></div></div>';
+        barsHtml += '<div style="width:36px;text-align:right;font-size:11px;font-weight:700;color:' + barColor + '">' + (sc !== null ? sc + '%' : '—') + '</div>';
+        barsHtml += '</div>';
+      });
+      el.innerHTML = summaryHtml + barsHtml;
+    }
+
+    // ═══════════════════════════════════════
+    // QUICK LOG MODAL
+    // ═══════════════════════════════════════
+    function openQuickLog() {
+      var today = isoD(new Date());
+      var el = document.getElementById('ql_date_label');
+      if (el) el.textContent = 'Logging for: ' + today;
+      var rows = getAllSchedRows();
+      var data = ls_get('sched');
+      var html = '';
+      rows.forEach(function(row, ri) {
+        var k = 'sched_' + ri + '_' + today;
+        var state = data[k] || 0;
+        html += '<div class="ql-row">';
+        html += '<span class="ql-time">' + esc(row.time||'') + '</span>';
+        html += '<span class="ql-label">' + esc(row.task||'') + '</span>';
+        html += '<button class="tri-btn" style="' + triStyle(state) + ';flex-shrink:0" data-k="' + k + '" data-store="sched" data-flash="fl_sched" onclick="triClick(this);this.closest(\'.ql-row\').style.opacity=this.style.background.includes(\'52,199\')?\'.6\':\'1\'"></button>';
+        html += '</div>';
+      });
+      document.getElementById('ql_items').innerHTML = html || '<div style="color:var(--text3);font-size:13px">No schedule items yet.</div>';
+      document.getElementById('ql_overlay').classList.add('open');
+    }
+
+    function closeQuickLog() {
+      document.getElementById('ql_overlay').classList.remove('open');
+      buildSched();
+      renderScores();
+    }
+
+    // ═══════════════════════════════════════
+    // JOURNAL
+    // ═══════════════════════════════════════
+    function getJournal() { return ls_get('journal_entries'); }
+
+    function saveJournalEntry() {
+      var date = document.getElementById('jrn_date').value;
+      var text = document.getElementById('jrn_text').value.trim();
+      var energy = document.getElementById('jrn_energy').value;
+      var mood   = document.getElementById('jrn_mood').value;
+      if (!date || !text) { alert('Select a date and write something.'); return; }
+      var journal = getJournal();
+      journal[date] = {date:date, text:text, energy:parseInt(energy)||null, mood:parseInt(mood)||null, saved:Date.now()};
+      ls_set('journal_entries', journal);
+      document.getElementById('jrn_text').value = '';
+      document.getElementById('jrn_energy').value = '';
+      document.getElementById('jrn_mood').value = '';
+      renderJournal();
+    }
+
+    function deleteJournalEntry(date) {
+      if (!confirm('Delete entry for ' + date + '?')) return;
+      var journal = getJournal();
+      delete journal[date];
+      ls_set('journal_entries', journal);
+      renderJournal();
+    }
+
+    function renderJournal() {
+      var journal = getJournal();
+      var el = document.getElementById('jrn_entries');
+      if (!el) return;
+      var keys = Object.keys(journal).sort(function(a,b){ return b.localeCompare(a); });
+      if (keys.length === 0) { el.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:8px 0">No entries yet — write your first one above.</div>'; return; }
+      var html = '';
+      keys.forEach(function(date) {
+        var e = journal[date];
+        var d = new Date(date+'T00:00:00');
+        var dayName = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'short'});
+        html += '<div class="journal-entry">';
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+        html += '<div class="journal-entry-date">' + dayName + '</div>';
+        html += '<div style="display:flex;gap:10px;align-items:center">';
+        if (e.energy) html += '<span style="font-size:11px;color:var(--yellow)">⚡ ' + e.energy + '/10</span>';
+        if (e.mood)   html += '<span style="font-size:11px;color:var(--teal)">😊 ' + e.mood + '/10</span>';
+        html += '<button class="btn btn-r btn-sm admin-only" style="font-size:10px" onclick="deleteJournalEntry(\'' + date + '\')">✕</button>';
+        html += '</div></div>';
+        html += '<div class="journal-entry-text">' + esc(e.text) + '</div>';
+        html += '</div>';
+      });
+      el.innerHTML = html;
     }
 
     // ═══════════════════════════════════════
@@ -3041,18 +3936,28 @@
 
       // Build trackers (3-day auto view)
       buildSched();
-      buildM1();
-      buildM2();
       buildGrocery();
       renderTasks();
       renderExpenses();
-      renderWeight();  // also calls updateOverviewMetrics
+      renderWeight();
       renderLimits();
       renderScores();
+      renderWeeklyReport();
+      renderWater();
       renderCustomGrocery();
       renderCustomSchedList();
       renderHabits();
       renderShopping();
+      renderRecipeDropdown();
+      renderJournal();
+      // Set journal date default
+      var jrn = document.getElementById('jrn_date');
+      if (jrn) jrn.value = today;
+      // Show FAB for admin only
+      if (_authRole === 'admin') {
+        var fab = document.getElementById('ql_fab');
+        if (fab) fab.style.display = 'flex';
+      }
 
       // Notifications (auto-request, no button needed)
       initNotifications();
@@ -3061,5 +3966,18 @@
       setTimeout(reRenderAll, 300);
     } // end initDashboard
 </script>
+<!-- QUICK LOG FLOATING BUTTON -->
+<button id="ql_fab" onclick="openQuickLog()" style="position:fixed;bottom:24px;right:18px;z-index:400;background:var(--accent);color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:22px;cursor:pointer;box-shadow:0 4px 18px var(--accent-glow);display:none;align-items:center;justify-content:center">⚡</button>
+
+<!-- QUICK LOG MODAL -->
+<div class="ql-overlay" id="ql_overlay" onclick="if(event.target===this)closeQuickLog()">
+  <div class="ql-sheet">
+    <div class="ql-title">⚡ Quick Log — Today</div>
+    <div class="ql-sub" id="ql_date_label"></div>
+    <div id="ql_items"></div>
+    <button class="btn btn-o" style="width:100%;margin-top:14px" onclick="closeQuickLog()">Done</button>
+  </div>
+</div>
+
 </body>
 </html>
