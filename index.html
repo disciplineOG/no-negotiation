@@ -431,7 +431,8 @@
         .notif-banner{
           background:var(--yellow);color:#000;padding:10px 16px;
           font-size:13px;font-weight:600;text-align:center;
-          position:sticky;top:0;z-index:500;display:none;
+          position:sticky;top:0;z-index:500;
+          padding-top:max(10px, env(safe-area-inset-top));display:none;
         }
         .notif-banner.show{display:block}
 
@@ -486,10 +487,7 @@
 </head>
 <body>
 
-<div class="notif-banner" id="notif_banner">
-    ⏰ Reminder: Log yesterday's schedule & expenses before 11 AM!
-    <button onclick="document.getElementById('notif_banner').style.display='none'" style="background:none;border:none;color:#000;font-size:16px;cursor:pointer;margin-left:8px;font-weight:700">✕</button>
-</div>
+
 <div class="header">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div class="header-title">Health & Life Dashboard</div>
@@ -509,6 +507,10 @@
         <button class="tab" id="tab_habits" onclick="showTab('habits')">Daily Forge</button>
         <button class="tab" id="tab_shopping" onclick="showTab('shopping')">Wish & Buy</button>
         <button class="tab" id="tab_journal" onclick="showTab('journal')">Journal</button>
+    </div>
+    <div class="notif-banner" id="notif_banner">
+        ⏰ Reminder: Log yesterday's schedule & expenses before 11 AM!
+        <button onclick="document.getElementById('notif_banner').style.display='none'" style="background:none;border:none;color:#000;font-size:16px;cursor:pointer;margin-left:8px;font-weight:700">✕</button>
     </div>
 </div>
 
